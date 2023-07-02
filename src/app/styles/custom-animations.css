@@ -1,0 +1,10 @@
+@keyframes shrink {
+from{
+    width: 80%;
+    left: 10%;
+}
+to{
+    width:15%;
+    left: 40%;
+}
+}
