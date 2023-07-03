@@ -1,0 +1,68 @@
+.interview-container {
+  position: fixed;
+  z-index: 999999999999999;
+  width: 65%;
+  height: 65%;
+  right: 0;
+  top: 17%;
+  animation: fadeInRight 1.5s;
+  transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border-bottom-left-radius: 2rem;
+  border-top-left-radius: 2rem;
+  background: linear-gradient(225deg, #b171ae, #d386cf);
+  box-shadow: -20px 20px 60px #845481, 20px -20px 60px #ffa6ff;
+  padding: 1rem;
+}
+
+.interview-container:hover {
+  transform: scale(1.03);
+}
+.interview-controls {
+  position: fixed;
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  flex-flow: row;
+  gap: 1rem;
+  height: 2rem;
+  right: 0;
+  border-bottom-left-radius: 2rem;
+  border-top-left-radius: 2rem;
+  background: linear-gradient(45deg, #d386cf, #b171ae);
+  box-shadow:  35px -35px 70px #8a5887,
+               -35px 35px 70px #ffa3fb;
+  width: 30%;
+  animation-delay: 2s;
+  animation: fadeInRight 2s;
+  transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  bottom: 5%;
+ 
+}
+@media (max-width: 768px) {
+  .interview-container {
+    width: 95%;
+  }
+}
+.session-details {
+  position: fixed;
+  z-index: 999999999999999;
+  width: 30%;
+  height: 65%;
+  left: 0;
+  top: 17%;
+  animation: fadeInLeft 1.5s;
+  transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border-top-right-radius: 2rem;
+  border-bottom-right-radius: 2rem;
+  background: linear-gradient(45deg, #d386cf, #b171ae);
+  box-shadow: 20px -20px 60px #845481, -20px 20px 60px #ffa6ff;
+}
+.session-details:hover {
+  transform: scale(1.03);
+}
+
+@media (max-width: 768px) {
+  .session-details {
+    width: 95%;
+  }
+}

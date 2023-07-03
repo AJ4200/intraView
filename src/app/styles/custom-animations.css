@@ -1,10 +1,19 @@
 @keyframes shrink {
-from{
+  from {
     width: 80%;
     left: 10%;
-}
-to{
-    width:15%;
+  }
+  to {
+    width: 15%;
     left: 40%;
+  }
 }
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(-360deg);
+  }
 }

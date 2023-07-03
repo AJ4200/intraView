@@ -1,0 +1,37 @@
+.md-loader-container{
+    position: fixed;
+    bottom: 30%;
+    left : 48%;
+}
+@media (max-width: 768px) {
+    .md-loader-container{
+        left : 45%;
+    } 
+}
+.md-loader {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 8px solid #0000;
+    border-right-color: #c57dc197;
+    position: relative;
+    animation: s4 2s infinite linear;
+  }
+  .md-loader:before,
+  .md-loader:after {
+    content: "";
+    position: absolute;
+    inset:-8px;
+    border-radius: 50%;
+    border:inherit;
+    animation:inherit;
+    animation-duration: 4s;
+  }
+  .md-loader:after {
+    animation-duration: 8s;
+  }
+  
+  @keyframes s4 {
+    100% {transform: rotate(1turn)}
+  }
+  

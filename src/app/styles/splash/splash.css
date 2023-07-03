@@ -1,26 +1,97 @@
-@import url("https://fonts.googleapis.com/css2?family=Russo+One&display=swap");
+.wrapper {
+    background-color: var(--background);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+	width: 100%;
+}
+.svglogo {
+    font-family: var(--heading-font);
+    width: 100%;
+    height: 100%;
+}
+ .svglogo text:first-child {
+    animation: stroke 10s infinite alternate;
+    stroke-width: 2;
+    stroke: #C57DC1;
+    font-size: 5rem;
+}
+ .svglogo text:nth-child(2) {
+    animation: strokeinvert 10s infinite alternate;
+    stroke-width: 2;
+    stroke: var(--text);
+    font-size: 7rem;
+    color: var(--primary-button);
+    font-family: var(--heading-font);
+   
+}
+ @keyframes stroke {
+    0% {
+        fill: rgba(3, 4, 2, 0);
+        stroke: rgba(197, 125, 193, 1);
+        stroke-dashoffset: 25%;
+        stroke-dasharray: 0 50%;
+        stroke-width: 2;
+        left: 0;
+    }
+    70% {
+        fill: rgba(3, 4, 2, 0);
+        stroke: rgba(197, 125, 193, 1);
+    }
+    80% {
+        fill: rgba(3, 4, 2, 0);
+        stroke: rgba(197, 125, 193, 1);
+        stroke-width: 3;
+    }
+    100% {
+        fill: rgba(3, 4, 2, 1);
+        stroke: rgba(197, 125, 193, 0);
+        stroke-dashoffset: -25%;
+        stroke-dasharray: 50% 0;
+        stroke-width: 0;
+        left: -10%; /* Adjust the left position to pull the text to the left */
+    }
+}
+@keyframes strokeinvert {
+    0% {
+        fill: rgba(197, 125, 193, 1);
+        stroke: rgba(3, 4, 2, 0);
+        stroke-dashoffset: 25%;
+        stroke-dasharray: 0 50%;
+        stroke-width: 2;
+        left: 0;
+    }
+    70% {
+        fill: rgba(197, 125, 193, 1);
+        stroke: rgba(3, 4, 2, 0);
+    }
+    80% {
+        fill: rgba(197, 125, 193, 1);
+        stroke: rgba(3, 4, 2, 0);
+        stroke-width: 3;
+    }
+    100% {
+        fill: rgba(197, 125, 193, 0);
+        stroke: rgba(3, 4, 2, 1);
+        stroke-dashoffset: -25%;
+        stroke-dasharray: 50% 0;
+        stroke-width: 0;
+        left: -10%; /* Adjust the left position to pull the text to the left */
+    }
+}
 
-svg {
-	font-family: var(--heading-font);
-	width: 100%; height: 100%;
-}
-svg text {
-	animation: stroke 10s infinite alternate;
-	stroke-width: 2;
-	stroke: #C57DC1;
-	font-size: 155px;
-}
-@keyframes stroke {
-	0%   {
-		fill: rgba(3,4,2,0); stroke: rgba(197,125,193,1);
-		stroke-dashoffset: 25%; stroke-dasharray: 0 50%; stroke-width: 2;
-	}
-	70%  {fill: rgba(3,4,2,0); stroke: rgba(197,125,193,1); }
-	80%  {fill: rgba(3,4,2,0); stroke: rgba(197,125,193,1); stroke-width: 3; }
-	100% {
-		fill: rgba(3,4,2,1); stroke: rgba(197,125,193,0);
-		stroke-dashoffset: -25%; stroke-dasharray: 50% 0; stroke-width: 0;
-	}
-}
+/* Media Query for Mobile Devices */
+@media (max-width: 767px) {
+    .wrapper {
+        width: 90%; /* Adjust the width as per your requirements */
+    }
 
-.wrapper {background-color: #F3F4E6};
+    .svglogo text:first-child {
+        font-size: 3rem; /* Adjust the font size as per your requirements */
+    }
+
+    .svglogo text:nth-child(2) {
+        font-size: 5rem; /* Adjust the font size as per your requirements */
+    }
+}
