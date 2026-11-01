@@ -49,9 +49,24 @@ Create `.env.local`:
 ```
 GROQ_API_KEY=your_key
 GROQ_MODEL=openai/gpt-oss-20b
+ADMIN_KEY=a_long_random_secret
 DATABASE_URL=postgres://user:pass@localhost:5432/intraview
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+## API
+
+Recruiter endpoints require the `x-admin-key` header (`ADMIN_KEY` in `.env.local`).
+
+| Method | Route | Purpose |
+| ------ | ----- | ------- |
+| POST | `/api/jobs` | Create a job with `requirements[]` (`name`, `tier`, `weight`, `isRequired`, `minScore`) |
+| POST | `/api/jobs/:id/invite` | Create an interview for `{ candidateName }`; returns `link` and `qr` (data URL) |
+| GET | `/api/interview/:token` | Candidate opens the link: interview auto-starts, returns the current question |
+| POST | `/api/interview/:token/answer` | Submit `{ answer }`; Groq scores it, may add a follow-up, finishes with the suitability result |
+| GET | `/api/interview/:token/live` | Recruiter live stream (SSE) with answers, scores and result |
+
+Candidates use `/i/<token>`. Development data is stored in `.data/db.json` (gitignored); the SQL schemas in `db/` are the target for PostgreSQL/SQLite.
 
 ## Getting started
 
