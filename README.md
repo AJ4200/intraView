@@ -1,34 +1,69 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# IntraView
 
-## Getting Started
+IntraView is a live, AI-assisted interview platform for **pre-screened candidates**. Candidates have already been shortlisted for a specific job role. IntraView runs a **tiered interview** against *every requirement* of that role and produces a **suitability percentage**.
 
-First, run the development server:
+## How it works
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+1. **Recruiter creates a Job** with a list of weighted requirements (skills, experience, soft skills, etc.) grouped into tiers.
+2. **Recruiter invites candidates.** Each candidate gets a unique link and QR code (`/i/<token>`).
+3. **Candidate opens the link/QR** and the live interview starts automatically. No account is needed.
+4. **Tiered questioning.** Questions are asked in order, tier by tier:
+   - **Tier 1 – Screening:** must-have requirements. Failing a required gate can end the interview early.
+   - **Tier 2 – Core:** main technical/role competencies.
+   - **Tier 3 – Deep dive:** advanced, culture and soft-skill questions.
+5. **Groq AI** generates questions per requirement, asks follow-ups, and scores each answer 0–100 with a rationale.
+6. **Suitability %** is computed from all requirements (weighted) and shown to the recruiter with a per-requirement breakdown.
+
+## Suitability scoring
+
+```
+suitability = Σ(requirement_score × weight) / Σ(weight)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Every requirement must be covered; unanswered requirements score 0.
+- Requirements flagged `is_required` are gates: a score below `min_score` marks the candidate **not suitable** regardless of the total.
+- Verdicts: `>= 80` Strong match, `60–79` Potential match, `< 60` Not suitable.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+See [src/lib/scoring.ts](src/lib/scoring.ts) and [src/lib/groq.ts](src/lib/groq.ts).
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Tech stack
 
-## Learn More
+| Concern  | Choice                                                         |
+| -------- | -------------------------------------------------------------- |
+| App      | Next.js (App Router), React, TypeScript                        |
+| AI       | [Groq](https://console.groq.com) (free API keys)               |
+| Database | PostgreSQL (hosted) or SQLite (offline/local)                  |
+| Live     | Server-Sent Events / WebSocket for the live recruiter view     |
 
-To learn more about Next.js, take a look at the following resources:
+## Database
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- PostgreSQL: [db/schema.postgres.sql](db/schema.postgres.sql)
+- SQLite (offline): [db/schema.sqlite.sql](db/schema.sqlite.sql)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Entities: `jobs` → `requirements` (tiered, weighted) → `questions`; `candidates` → `interviews` (token/QR) → `answers` (scored per requirement) → `results`.
 
-## Deploy on Vercel
+## Configuration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create `.env.local`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```
+GROQ_API_KEY=your_key
+GROQ_MODEL=openai/gpt-oss-20b
+DATABASE_URL=postgres://user:pass@localhost:5432/intraview
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+## Roadmap
+
+- [ ] Job & requirement builder UI
+- [ ] Invite link + QR generation
+- [ ] Live interview session (voice/video, captions) wired to Groq
+- [ ] Recruiter dashboard with live progress and suitability results
+- [ ] Offline mode with SQLite
