@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import { useMe } from "@/lib/client";
@@ -50,6 +50,35 @@ export default function Dashboard() {
   const [candidate, setCandidate] = useState<Record<string, string>>({});
   const [invites, setInvites] = useState<Record<string, Invite>>({});
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState<"all" | "invited" | "in_progress" | "completed">("all");
+  const [q, setQ] = useState("");
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 2000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const stats = useMemo(() => {
+    const done = rows.filter((r) => r.suitability !== undefined);
+    const avg = done.length ? done.reduce((s, r) => s + (r.suitability ?? 0), 0) / done.length : null;
+    return {
+      jobs: jobs.length,
+      live: rows.filter((r) => r.status === "in_progress").length,
+      completed: rows.filter((r) => r.status === "completed").length,
+      avg,
+    };
+  }, [jobs, rows]);
+
+  const visibleRows = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows.filter(
+      (r) =>
+        (filter === "all" || r.status === filter) &&
+        (!needle || `${r.candidateName} ${r.jobTitle ?? ""}`.toLowerCase().includes(needle))
+    );
+  }, [rows, filter, q]);
 
   const api = useCallback(async (path: string, init?: RequestInit) => {
     const r = await fetch(path, { ...init, headers: { "Content-Type": "application/json" } });
@@ -139,6 +168,12 @@ export default function Dashboard() {
             </h1>
             {error && <p className="error" role="alert">{error}</p>}
 
+            <div className="stats">
+              <div className="stat glass"><b>{stats.jobs}</b><span>Open jobs</span></div>
+              <div className="stat glass"><b>{stats.live}</b><span>Interviews live now</span></div>
+              <div className="stat glass"><b>{stats.completed}</b><span>Completed</span></div>
+              <div className="stat glass"><b>{stats.avg === null ? "—" : `${stats.avg.toFixed(0)}%`}</b><span>Avg suitability</span></div>
+            </div>
             <section className="card" id="new-job">
               <h2>New job</h2>
               <div className="field">
@@ -184,10 +219,22 @@ export default function Dashboard() {
 
             {jobs.map((job) => (
               <section className="card" key={job.id} id={`job-${job.id}`}>
-                <h2>{job.title}</h2>
-                <p className="muted">
-                  {job.requirements.length} requirements · {job.timeLimitMinutes ? `${job.timeLimitMinutes} min limit` : "no time limit"}
-                </p>
+                <div className="job-head">
+                  <div>
+                    <h2>{job.title}</h2>
+                    <p className="muted">
+                      {job.requirements.length} requirements · {job.timeLimitMinutes ? `${job.timeLimitMinutes} min limit` : "no time limit"}
+                    </p>
+                  </div>
+                  <span className="badge">{rows.filter((r) => r.jobTitle === job.title).length} interviews</span>
+                </div>
+                <div className="tags">
+                  {job.requirements.map((r, i) => (
+                    <span key={i} className={`tag ${r.isRequired ? "must" : ""}`} title={`Tier ${r.tier} · weight ${r.weight}`}>
+                      T{r.tier} · {r.name}{r.isRequired ? " ★" : ""}
+                    </span>
+                  ))}
+                </div>
                 <div className="actions">
                   <input className="input" style={{ maxWidth: 260 }} placeholder="Candidate name" value={candidate[job.id] ?? ""} onChange={(e) => setCandidate((c) => ({ ...c, [job.id]: e.target.value }))} />
                   <button className="btn" onClick={() => invite(job)}>Create invite</button>
@@ -200,7 +247,15 @@ export default function Dashboard() {
                     <div>
                       <p style={{ wordBreak: "break-all" }}>{invites[job.id].link}</p>
                       <div className="actions">
-                        <button className="btn secondary" onClick={() => navigator.clipboard.writeText(invites[job.id].link)}>Copy link</button>
+                        <button
+                          className="btn secondary"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(invites[job.id].link);
+                            setToast("Link copied");
+                          }}
+                        >
+                          Copy link
+                        </button>
                         <Link className="btn" href={`/dashboard/live/${invites[job.id].token}`}>Watch live</Link>
                       </div>
                     </div>
@@ -214,28 +269,46 @@ export default function Dashboard() {
               {rows.length === 0 ? (
                 <p className="muted">No interviews yet. Create a job and an invite to get started.</p>
               ) : (
-                <table className="table">
-                  <thead>
-                    <tr><th>Candidate</th><th>Job</th><th>Status</th><th>Progress</th><th>Suitability</th><th /></tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r) => (
-                      <tr key={r.token}>
-                        <td>{r.candidateName}</td>
-                        <td>{r.jobTitle}</td>
-                        <td>{r.status.replace("_", " ")}{r.timedOut ? " (time up)" : ""}</td>
-                        <td>{r.progress}</td>
-                        <td>{r.suitability !== undefined ? <span className={`badge ${r.verdict}`}>{r.suitability.toFixed(0)}%</span> : "—"}</td>
-                        <td><Link href={`/dashboard/live/${r.token}`}>Open</Link></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <>
+                  <div className="toolbar">
+                    <input className="input" placeholder="Search candidates or jobs…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search interviews" />
+                    <div className="filters">
+                      {(["all", "invited", "in_progress", "completed"] as const).map((f) => (
+                        <button key={f} className={`filter ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
+                          {f === "all" ? "All" : f.replace("_", " ")}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="table-wrap">
+                    <table className="table">
+                      <thead>
+                        <tr><th>Candidate</th><th>Job</th><th>Status</th><th>Progress</th><th>Suitability</th><th /></tr>
+                      </thead>
+                      <tbody>
+                        {visibleRows.length === 0 && (
+                          <tr><td colSpan={6} className="muted">No interviews match.</td></tr>
+                        )}
+                        {visibleRows.map((r) => (
+                          <tr key={r.token}>
+                            <td>{r.candidateName}</td>
+                            <td>{r.jobTitle}</td>
+                            <td><span className={`status ${r.status}`}>{r.status.replace("_", " ")}{r.timedOut ? " (time up)" : ""}</span></td>
+                            <td>{r.progress}</td>
+                            <td>{r.suitability !== undefined ? <span className={`badge ${r.verdict}`}>{r.suitability.toFixed(0)}%</span> : "—"}</td>
+                            <td><Link href={`/dashboard/live/${r.token}`}>Open →</Link></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </section>
           </>
         )}
       </div>
+      {toast && <div className="mini-toast" role="status">{toast}</div>}
       <Footer />
     </>
   );
