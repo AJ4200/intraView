@@ -4,9 +4,6 @@ import './styles/custom-animations.css'
 import 'animate.css'
 import './styles/footer/footer.css'
 import './styles/splash/splash.css'
-import './styles/footer/search.css'
-import './styles/footer/homebutton.css'
-import './styles/footer/more.css'
 import './styles/utils.css'
 import "./styles/interview/interview.css"
 import "./styles/app.css"

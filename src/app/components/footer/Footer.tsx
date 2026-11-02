@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import Search from "./Search";
-import HomeButton from "./HomeButton";
-import More from "./More";
+import DockLink from "./DockLink";
 import SearchPalette from "./SearchPalette";
-import { clearLocalData, signOut, useMe } from "@/lib/client";
+import { DashboardIcon, DocumentIcon, PlusIcon, SignInIcon } from "./DockIcons";
+import { useMe } from "@/lib/client";
 
 interface FooterProps {
   prop?: string;
@@ -14,12 +13,9 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = () => {
   const me = useMe();
-  const router = useRouter();
   const [footerActive, setFooterActive] = useState(false);
   const [hover, setHover] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [toast, setToast] = useState("");
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
@@ -32,17 +28,11 @@ const Footer: React.FC<FooterProps> = () => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
-      } else if (e.key === "Escape") setMenuOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(""), 2500);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   const enter = () => {
     clearTimeout(leaveTimer.current);
@@ -53,13 +43,7 @@ const Footer: React.FC<FooterProps> = () => {
     leaveTimer.current = setTimeout(() => setHover(false), 250);
   };
 
-  const revealed = hover || menuOpen;
-  const close = () => setMenuOpen(false);
-
-  async function clearCache() {
-    await clearLocalData();
-    setToast("Cached data cleared");
-  }
+  const revealed = hover || searchOpen;
 
   return (
     <>
@@ -71,38 +55,17 @@ const Footer: React.FC<FooterProps> = () => {
         onBlur={leave}
       >
         <ul className="icon-container">
-          <Search onClick={() => setSearchOpen(true)} />
-          <HomeButton />
-          <More open={menuOpen} onClick={() => setMenuOpen((o) => !o)} />
-        </ul>
-      </footer>
-
-      {menuOpen && (
-        <div className="dock-menu" role="menu" onMouseEnter={enter} onMouseLeave={leave}>
+          <Search open={searchOpen} onClick={() => setSearchOpen((o) => !o)} />
           {me?.user ? (
             <>
-              <Link role="menuitem" href="/dashboard" onClick={close}>Dashboard</Link>
-              <Link role="menuitem" href="/dashboard#new-job" onClick={close}>New job</Link>
+              <DockLink href="/dashboard" label="Dashboard"><DashboardIcon /></DockLink>
+              <DockLink href="/dashboard#new-job" label="New job"><PlusIcon /></DockLink>
             </>
           ) : (
-            <Link role="menuitem" href="/login" onClick={close}>Sign in</Link>
+            me && <DockLink href="/login" label="Sign in"><SignInIcon /></DockLink>
           )}
-          <Link role="menuitem" href="/legal/eula" onClick={close}>EULA &amp; data</Link>
-          <button role="menuitem" onClick={() => { close(); void clearCache(); }}>Clear cached data</button>
-          {me?.user && (
-            <button
-              role="menuitem"
-              onClick={async () => {
-                close();
-                await signOut();
-                router.push("/");
-              }}
-            >
-              Sign out
-            </button>
-          )}
-        </div>
-      )}
+        </ul>
+      </footer>
 
       <div className={`site-footer ${revealed ? "show" : ""}`} onMouseEnter={enter} onMouseLeave={leave}>
         <span className="made-with">
@@ -118,11 +81,12 @@ const Footer: React.FC<FooterProps> = () => {
             AJ4200
           </a>
         </span>
-        <Link href="/legal/eula">EULA</Link>
-        <button onClick={clearCache}>Clear cache</button>
+        <Link href="/legal/eula" className="eula-link" aria-label="EULA &amp; data" title="EULA &amp; data">
+          <DocumentIcon />
+          <span>EULA</span>
+        </Link>
       </div>
 
-      {toast && <div className="toast" role="status">{toast}</div>}
       <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} me={me} />
     </>
   );

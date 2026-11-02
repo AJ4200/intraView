@@ -39,6 +39,23 @@
   text-decoration: underline;
 }
 
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.nav-icon:hover,
+.nav-icon:focus-visible {
+  text-decoration: none;
+  background: #0001;
+  transform: scale(1.1);
+}
+
 .nav-user {
   background: var(--accent);
   border-radius: 1rem;
@@ -67,6 +84,19 @@
   border-radius: 2rem;
 }
 
+/* Size the dock to its buttons instead of a fixed percentage */
+footer.dock.footeractive {
+  animation: none;
+  width: max-content;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0 1rem;
+}
+
+.dock-btn.active {
+  background: #0002;
+}
+
 .icon-container {
   list-style: none;
 }
@@ -93,6 +123,30 @@
 
 .dock-btn .icon {
   margin: 0;
+}
+
+.eula-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.eula-link span {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+}
+
+.eula-link:hover span,
+.eula-link:focus-visible span {
+  max-width: 5rem;
+  opacity: 1;
+  margin-left: 0.4rem;
+}
+
+.site-footer .eula-link:hover {
+  text-decoration: none;
 }
 
 /* Main footer, revealed below the dock on hover or via the dock menu */
@@ -162,77 +216,32 @@
   }
 }
 
-.dock-menu {
-  position: fixed;
-  z-index: 999999999999999;
-  left: 50%;
-  bottom: 5.5rem;
-  transform: translateX(-50%);
-  min-width: 13rem;
-  display: flex;
-  flex-direction: column;
-  background: var(--accent);
-  border: 1px solid var(--text);
-  border-radius: 1.25rem;
-  padding: 0.5rem;
-  box-shadow: 0 10px 30px #0004;
-  animation: fadeInUp 0.3s;
-}
-
-.dock-menu a,
-.dock-menu button {
-  text-align: left;
-  padding: 0.5rem 0.9rem;
-  border: 0;
-  border-radius: 0.75rem;
-  background: none;
-  font: inherit;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.dock-menu a:hover,
-.dock-menu button:hover {
-  background: var(--primary-button);
-}
-
-.toast {
-  position: fixed;
-  z-index: 9999999999999999;
-  left: 50%;
-  bottom: 6rem;
-  transform: translateX(-50%);
-  background: var(--text);
-  color: var(--accent);
-  border-radius: 2rem;
-  padding: 0.5rem 1.25rem;
-  animation: fadeInUp 0.3s;
-}
-
-/* Search palette */
+/* Search palette: opens as a panel attached to the dock */
 .palette-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9999999999999999;
-  background: #0006;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 15vh;
+  z-index: 999999999999997;
+  background: transparent;
 }
 
 .palette {
-  width: min(560px, 92vw);
+  position: fixed;
+  left: 50%;
+  bottom: 5.4rem;
+  translate: -50% 0;
+  width: min(480px, 92vw);
+  display: flex;
+  flex-direction: column-reverse;
   background: var(--accent);
   border-radius: 1.5rem;
-  padding: 1rem;
-  box-shadow: 0 20px 60px #0006;
-  animation: fadeInDown 0.3s;
+  padding: 0.6rem;
+  box-shadow: inset -20px -20px 60px #845481, inset 20px 20px 60px #ffa6ff, 0 10px 30px #0004;
+  animation: fadeInUp 0.3s;
 }
 
 .palette-list {
   list-style: none;
-  margin-top: 0.75rem;
+  margin: 0 0 0.5rem;
 }
 
 .palette-list button {
