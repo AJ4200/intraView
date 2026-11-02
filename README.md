@@ -74,7 +74,7 @@ Recruiter routes use the session cookie.
 | GET | `/api/auth/me`, `/api/auth/google` | Current user, Google sign-in |
 | GET/POST | `/api/jobs` | List / create jobs with `requirements[]` and time limit |
 | DELETE | `/api/jobs/:id` | Delete a job |
-| POST | `/api/jobs/:id/invite` | Create an interview for `{ candidateName }`; returns `link` and `qr` |
+| POST | `/api/jobs/:id/invite` | Create an interview for `{ candidateName, candidateEmail?, dueAt? }`; returns `link`, `qr` (via [commonfunlib](https://www.npmjs.com/package/commonfunlib)) and, when an email is given, a styled `email` (`mailto`, `html`, `text`). Starting after `dueAt` is rejected (410) |
 | GET | `/api/interview/:token` | Candidate view (read-only) |
 | POST | `/api/interview/:token/start` | Begin: generates questions, starts the timer |
 | POST | `/api/interview/:token/answer` | Submit `{ answer }`; scored by Groq |
@@ -93,7 +93,7 @@ npm run dev
 
 1. Set `.env.local` (see `.env.example`) and run `npm run dev`.
 2. Open `/dashboard`, register or sign in, and create a job with its requirements (tier, weight, must-pass, minimum score).
-3. Click **Create invite** for a candidate to get a link and QR code, then **Watch live**.
+3. Click **Create invite** for a candidate (optionally with their email and a complete-by date) to get a link, QR code and a ready-to-send email (**Email candidate** opens your mail client with the details pre-filled; **Preview/Copy HTML** gives the styled template), then **Watch live**.
 4. The candidate opens `/i/<token>`: questions are read aloud, answers can be typed or dictated, and each answer is scored by Groq.
 5. The live view shows the transcript, per-answer scores and the final suitability %.
 

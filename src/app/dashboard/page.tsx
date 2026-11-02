@@ -34,6 +34,7 @@ interface Invite {
   link: string;
   qr: string;
   token: string;
+  email: { to: string; subject: string; html: string; text: string; mailto: string } | null;
 }
 
 const blank = (): Req => ({ name: "", tier: 1, weight: 1, isRequired: false, minScore: 50 });
@@ -48,6 +49,9 @@ export default function Dashboard() {
   const [timeMode, setTimeMode] = useState<"recommended" | "custom" | "none">("recommended");
   const [customMinutes, setCustomMinutes] = useState(30);
   const [candidate, setCandidate] = useState<Record<string, string>>({});
+  const [candidateEmail, setCandidateEmail] = useState<Record<string, string>>({});
+  const [dueAt, setDueAt] = useState<Record<string, string>>({});
+  const [preview, setPreview] = useState<string | null>(null);
   const [invites, setInvites] = useState<Record<string, Invite>>({});
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | "invited" | "in_progress" | "completed">("all");
@@ -145,10 +149,16 @@ export default function Dashboard() {
     try {
       const inv = await api(`/api/jobs/${job.id}/invite`, {
         method: "POST",
-        body: JSON.stringify({ candidateName: candidate[job.id] || "Candidate" }),
+        body: JSON.stringify({
+          candidateName: candidate[job.id] || "Candidate",
+          candidateEmail: candidateEmail[job.id] || undefined,
+          dueAt: dueAt[job.id] ? new Date(dueAt[job.id]).toISOString() : undefined,
+        }),
       });
       setInvites((i) => ({ ...i, [job.id]: inv }));
       setCandidate((c) => ({ ...c, [job.id]: "" }));
+      setCandidateEmail((c) => ({ ...c, [job.id]: "" }));
+      setDueAt((c) => ({ ...c, [job.id]: "" }));
       await refresh();
     } catch (e) {
       setError((e as Error).message);
@@ -235,8 +245,15 @@ export default function Dashboard() {
                     </span>
                   ))}
                 </div>
+                <div className="invite-form">
+                  <input className="input" placeholder="Candidate name" value={candidate[job.id] ?? ""} onChange={(e) => setCandidate((c) => ({ ...c, [job.id]: e.target.value }))} />
+                  <input className="input" type="email" placeholder="Candidate email (optional)" value={candidateEmail[job.id] ?? ""} onChange={(e) => setCandidateEmail((c) => ({ ...c, [job.id]: e.target.value }))} aria-label="Candidate email" />
+                  <label className="invite-due">
+                    <span className="muted">Complete by (optional)</span>
+                    <input className="input" type="datetime-local" value={dueAt[job.id] ?? ""} onChange={(e) => setDueAt((c) => ({ ...c, [job.id]: e.target.value }))} />
+                  </label>
+                </div>
                 <div className="actions">
-                  <input className="input" style={{ maxWidth: 260 }} placeholder="Candidate name" value={candidate[job.id] ?? ""} onChange={(e) => setCandidate((c) => ({ ...c, [job.id]: e.target.value }))} />
                   <button className="btn" onClick={() => invite(job)}>Create invite</button>
                   <button className="btn secondary" onClick={() => removeJob(job)}>Delete job</button>
                 </div>
@@ -258,6 +275,21 @@ export default function Dashboard() {
                         </button>
                         <Link className="btn" href={`/dashboard/live/${invites[job.id].token}`}>Watch live</Link>
                       </div>
+                      {invites[job.id].email && (
+                        <div className="actions" style={{ marginTop: "0.75rem" }}>
+                          <a className="btn" href={invites[job.id].email!.mailto}>✉ Email candidate</a>
+                          <button className="btn secondary" onClick={() => setPreview(invites[job.id].email!.html)}>Preview HTML email</button>
+                          <button
+                            className="btn secondary"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(invites[job.id].email!.html);
+                              setToast("HTML email copied");
+                            }}
+                          >
+                            Copy HTML
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -308,6 +340,17 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      {preview && (
+        <div className="modal-backdrop" onMouseDown={() => setPreview(null)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Email preview" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="modal-bar">
+              <strong>Email preview</strong>
+              <button className="btn secondary" onClick={() => setPreview(null)}>Close</button>
+            </div>
+            <iframe title="Email preview" sandbox="" srcDoc={preview} />
+          </div>
+        </div>
+      )}
       {toast && <div className="mini-toast" role="status">{toast}</div>}
       <Footer />
     </>

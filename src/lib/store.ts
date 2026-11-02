@@ -40,6 +40,8 @@ export interface Interview {
   queue: QueueItem[];
   current: number;
   createdAt: number;
+  candidateEmail?: string;
+  dueAt?: number;
   startedAt?: number;
   deadlineAt?: number;
   timedOut?: boolean;

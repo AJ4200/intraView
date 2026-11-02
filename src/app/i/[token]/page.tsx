@@ -12,6 +12,8 @@ interface View {
   index: number;
   timeLimitMinutes: number | null;
   deadlineAt: number | null;
+  dueAt: number | null;
+  expired: boolean;
   timedOut: boolean;
   serverNow: number;
   question: { text: string; requirement?: string; tier?: number } | null;
@@ -107,7 +109,10 @@ export default function CandidateInterview({ params }: { params: Promise<{ token
     setError("");
     try {
       const r = await fetch(`/api/interview/${token}/start`, { method: "POST" });
-      if (!r.ok) throw new Error("Could not start the interview. Please try again.");
+      if (!r.ok) {
+        const msg = (await r.json().catch(() => null))?.error;
+        throw new Error(r.status === 410 && msg ? msg : "Could not start the interview. Please try again.");
+      }
       applyView(await r.json());
     } catch (e) {
       setError((e as Error).message);
@@ -177,11 +182,17 @@ export default function CandidateInterview({ params }: { params: Promise<{ token
                   ? `You have ${view.timeLimitMinutes} minutes. The timer starts when you press Begin.`
                   : "There is no time limit, but please answer at a steady pace."}
               </li>
+              {view.dueAt && (
+                <li>
+                  {view.expired ? "This invitation expired on " : "Please complete it by "}
+                  <strong>{new Date(view.dueAt).toLocaleString([], { dateStyle: "full", timeStyle: "short" })}</strong>.
+                </li>
+              )}
               <li>Questions are read aloud and shown as captions. You can type or dictate your answers.</li>
               <li>Your answers are scored by an AI and reviewed by the recruiting team.</li>
             </ul>
             {error && <p className="error" role="alert">{error}</p>}
-            <button className="btn" onClick={begin} disabled={starting}>
+            <button className="btn" onClick={begin} disabled={starting || view.expired}>
               {starting ? "Preparing your questions…" : "Begin interview"}
             </button>
           </div>

@@ -9,7 +9,11 @@ const ANSWER_GRACE_MS = 15_000;
 // Interviews abandoned past their deadline are closed by the server after this long.
 export const ABANDON_MS = 60_000;
 
-export function createInterview(job: Job, candidateName: string): Promise<Interview> {
+export function createInterview(
+  job: Job,
+  candidateName: string,
+  extra: { candidateEmail?: string; dueAt?: number } = {}
+): Promise<Interview> {
   const interview: Interview = {
     token: randomBytes(16).toString("hex"),
     ownerId: job.ownerId,
@@ -19,6 +23,7 @@ export function createInterview(job: Job, candidateName: string): Promise<Interv
     queue: [],
     current: 0,
     createdAt: Date.now(),
+    ...extra,
   };
   return withDb((db) => {
     db.interviews[interview.token] = interview;
@@ -46,6 +51,8 @@ function finish(i: Interview, job: Job, timedOut = false) {
   i.result = computeSuitability(job.requirements, requirementScores(i));
 }
 
+export const isInviteExpired = (i: Interview) => i.status === "invited" && Boolean(i.dueAt && Date.now() > i.dueAt);
+
 // Generates every question up front, ordered tier by tier, covering all requirements.
 // The timer starts here, once the candidate has pressed Begin.
 export async function startInterview(token: string): Promise<Interview | null> {
@@ -53,6 +60,7 @@ export async function startInterview(token: string): Promise<Interview | null> {
   const interview = db.interviews[token];
   if (!interview) return null;
   if (interview.status !== "invited") return interview;
+  if (isInviteExpired(interview)) return interview;
   const job = db.jobs[interview.jobId];
   if (!job) return null;
 
@@ -157,6 +165,8 @@ export function candidateView(i: Interview, job: Job) {
     index: i.current,
     timeLimitMinutes: job.timeLimitMinutes ?? null,
     deadlineAt: i.deadlineAt ?? null,
+    dueAt: i.dueAt ?? null,
+    expired: isInviteExpired(i),
     timedOut: Boolean(i.timedOut),
     serverNow: Date.now(),
     question: q ? { text: q.text, requirement: req?.name, tier: req?.tier } : null,

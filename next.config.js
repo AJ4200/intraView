@@ -8,7 +8,7 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Keep database drivers out of the bundle.
-  serverExternalPackages: ['pg'],
+  serverExternalPackages: ['pg', 'commonfunlib'],
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
