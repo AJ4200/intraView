@@ -52,7 +52,7 @@ Copy `.env.example` to `.env.local`:
 | `SESSION_SECRET` | Required; signs recruiter session cookies |
 | `NEXT_PUBLIC_APP_URL` | Base URL for invite links, QR codes and Google redirect |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google sign-in (redirect URI `<APP_URL>/api/auth/google/callback`) |
-| `DATABASE_URL` | Optional. `postgres://...` for PostgreSQL, `file:./.data/intraview.db` for SQLite (needs Node 22.5+), unset for `.data/db.json` |
+| `DATABASE_URL` | Optional. `postgres://...` for PostgreSQL (including Neon), `file:./.data/intraview.db` for SQLite (needs Node 22.5+), unset for `.data/db.json`. Neon/Vercel `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_UNPOOLED` and `POSTGRES_URL_NON_POOLING` are accepted if `DATABASE_URL` is unset; pooled URLs are preferred over unpooled fallbacks. |
 
 Storage currently keeps the app state as one JSON document (`app_state`) in every backend; `db/` holds the target relational schema.
 

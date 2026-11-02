@@ -55,7 +55,13 @@ export interface Db {
 
 type Tx = <T>(fn: (db: Db) => Promise<T> | T, write: boolean) => Promise<T>;
 
-const url = process.env.DATABASE_URL ?? "";
+const url =
+  process.env.DATABASE_URL?.trim() ||
+  process.env.POSTGRES_URL?.trim() ||
+  process.env.POSTGRES_PRISMA_URL?.trim() ||
+  process.env.DATABASE_URL_UNPOOLED?.trim() ||
+  process.env.POSTGRES_URL_NON_POOLING?.trim() ||
+  "";
 export const storageKind: "postgres" | "sqlite" | "json" = /^postgres(ql)?:/i.test(url)
   ? "postgres"
   : /^(sqlite:|file:)/i.test(url)
