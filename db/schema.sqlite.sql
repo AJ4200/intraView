@@ -69,3 +69,21 @@ CREATE TABLE results (
 
 CREATE INDEX idx_requirements_job ON requirements(job_id, tier, position);
 CREATE INDEX idx_answers_interview ON answers(interview_id);
+
+-- Accounts, ownership and timed interviews
+CREATE TABLE users (
+  id            TEXT PRIMARY KEY,
+  email         TEXT NOT NULL UNIQUE,
+  name          TEXT,
+  password_hash TEXT,
+  google_id     TEXT UNIQUE,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+ALTER TABLE jobs ADD COLUMN owner_id TEXT REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE jobs ADD COLUMN time_limit_minutes INTEGER CHECK (time_limit_minutes BETWEEN 5 AND 240);
+
+-- Used by the app today: the whole state as one JSON document
+CREATE TABLE IF NOT EXISTS app_state (
+  id   INTEGER PRIMARY KEY,
+  data TEXT NOT NULL
+);

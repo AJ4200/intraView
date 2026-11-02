@@ -44,30 +44,44 @@ Entities: `jobs` → `requirements` (tiered, weighted) → `questions`; `candida
 
 ## Configuration
 
-Create `.env.local`:
+Copy `.env.example` to `.env.local`:
 
-```
-GROQ_API_KEY=your_key
-GROQ_MODEL=openai/gpt-oss-20b
-ADMIN_KEY=a_long_random_secret
-DATABASE_URL=postgres://user:pass@localhost:5432/intraview
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+| Variable | Purpose |
+| -------- | ------- |
+| `GROQ_API_KEY`, `GROQ_MODEL` | AI question generation and scoring |
+| `SESSION_SECRET` | Required; signs recruiter session cookies |
+| `NEXT_PUBLIC_APP_URL` | Base URL for invite links, QR codes and Google redirect |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google sign-in (redirect URI `<APP_URL>/api/auth/google/callback`) |
+| `DATABASE_URL` | Optional. `postgres://...` for PostgreSQL, `file:./.data/intraview.db` for SQLite (needs Node 22.5+), unset for `.data/db.json` |
+
+Storage currently keeps the app state as one JSON document (`app_state`) in every backend; `db/` holds the target relational schema.
+
+## Accounts
+
+Recruiters register with email and password or sign in with Google. Jobs and interviews are scoped to the signed-in recruiter (httpOnly session cookie).
+
+## Timed interviews
+
+Each job can use the recommended time (based on question count), a custom time (5-240 min) or no limit. The clock starts when the candidate presses Begin; at zero the draft answer is submitted and the interview ends.
 
 ## API
 
-Recruiter endpoints require the `x-admin-key` header (`ADMIN_KEY` in `.env.local`).
+Recruiter routes use the session cookie.
 
 | Method | Route | Purpose |
 | ------ | ----- | ------- |
-| POST | `/api/jobs` | Create a job with `requirements[]` (`name`, `tier`, `weight`, `isRequired`, `minScore`) |
-| POST | `/api/jobs/:id/invite` | Create an interview for `{ candidateName }`; returns `link` and `qr` (data URL) |
-| GET | `/api/interview/:token` | Candidate opens the link: interview auto-starts, returns the current question |
-| POST | `/api/interview/:token/answer` | Submit `{ answer }`; Groq scores it, may add a follow-up, finishes with the suitability result |
-| GET | `/api/interview/:token/live` | Recruiter live stream (SSE) with answers, scores and result |
+| POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Email accounts |
+| GET | `/api/auth/me`, `/api/auth/google` | Current user, Google sign-in |
+| GET/POST | `/api/jobs` | List / create jobs with `requirements[]` and time limit |
+| DELETE | `/api/jobs/:id` | Delete a job |
+| POST | `/api/jobs/:id/invite` | Create an interview for `{ candidateName }`; returns `link` and `qr` |
+| GET | `/api/interview/:token` | Candidate view (read-only) |
+| POST | `/api/interview/:token/start` | Begin: generates questions, starts the timer |
+| POST | `/api/interview/:token/answer` | Submit `{ answer }`; scored by Groq |
+| POST | `/api/interview/:token/expire` | Close an interview when time runs out |
+| GET | `/api/interview/:token/live` | Recruiter live stream (SSE, owner only) |
 
-Candidates use `/i/<token>`. Development data is stored in `.data/db.json` (gitignored); the SQL schemas in `db/` are the target for PostgreSQL/SQLite.
-
+Candidates use `/i/<token>`. The dock footer offers search (Ctrl+K), home and a menu; the legal bar (made by AJ4200, EULA, clear cache) appears on hover.
 ## Getting started
 
 ```bash
@@ -75,10 +89,19 @@ npm install
 npm run dev
 ```
 
+## Using the app
+
+1. Set `.env.local` (see `.env.example`) and run `npm run dev`.
+2. Open `/dashboard`, register or sign in, and create a job with its requirements (tier, weight, must-pass, minimum score).
+3. Click **Create invite** for a candidate to get a link and QR code, then **Watch live**.
+4. The candidate opens `/i/<token>`: questions are read aloud, answers can be typed or dictated, and each answer is scored by Groq.
+5. The live view shows the transcript, per-answer scores and the final suitability %.
+
 ## Roadmap
 
-- [ ] Job & requirement builder UI
-- [ ] Invite link + QR generation
-- [ ] Live interview session (voice/video, captions) wired to Groq
-- [ ] Recruiter dashboard with live progress and suitability results
-- [ ] Offline mode with SQLite
+- [x] Job & requirement builder UI
+- [x] Invite link + QR generation
+- [x] Live interview session (read-aloud questions, dictation, captions) wired to Groq
+- [x] Recruiter dashboard with live progress and suitability results
+- [x] PostgreSQL/SQLite/JSON storage via `DATABASE_URL`
+- [ ] Video recording

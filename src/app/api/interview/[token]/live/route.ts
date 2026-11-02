@@ -1,17 +1,20 @@
-import { isAdmin, unauthorized } from "@/lib/auth";
-import { recruiterView } from "@/lib/engine";
+import { requireUser, unauthorized } from "@/lib/auth";
+import { ABANDON_MS, expireIfNeeded, recruiterView } from "@/lib/engine";
 import { readDb } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
 
-// Server-Sent Events stream so recruiters watch the interview live.
+// Server-Sent Events stream so the owning recruiter watches the interview live.
 export async function GET(req: Request, ctx: { params: Promise<{ token: string }> }) {
-  if (!isAdmin(req)) return unauthorized();
+  const user = await requireUser(req);
+  if (!user) return unauthorized();
   const { token } = await ctx.params;
+  const first = (await readDb()).interviews[token];
+  if (!first || first.ownerId !== user.id) return Response.json({ error: "Not found" }, { status: 404 });
+
   const enc = new TextEncoder();
   let timer: ReturnType<typeof setInterval> | undefined;
   let closed = false;
-  let last = "";
 
   const stream = new ReadableStream({
     start(controller) {
@@ -19,22 +22,21 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
         if (closed) return;
         closed = true;
         clearInterval(timer);
-        controller.close();
+        try {
+          controller.close();
+        } catch {}
       };
       const tick = async () => {
         if (closed) return;
-        const db = await readDb();
-        const i = db.interviews[token];
-        if (!i) {
-          controller.enqueue(enc.encode(`event: error\ndata: not found\n\n`));
-          return close();
+        try {
+          const i = await expireIfNeeded(token, ABANDON_MS);
+          if (!i) return close();
+          const job = (await readDb()).jobs[i.jobId];
+          controller.enqueue(enc.encode(`data: ${JSON.stringify(recruiterView(i, job))}\n\n`));
+          if (i.status === "completed") close();
+        } catch {
+          close();
         }
-        const data = JSON.stringify(recruiterView(i, db.jobs[i.jobId]));
-        if (data !== last) {
-          last = data;
-          controller.enqueue(enc.encode(`data: ${data}\n\n`));
-        }
-        if (i.status === "completed") close();
       };
       void tick();
       timer = setInterval(tick, 1500);

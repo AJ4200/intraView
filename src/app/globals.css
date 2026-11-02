@@ -32,16 +32,9 @@ header {
   font-family: var(--heading-font);
 
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
   align-items: center;
-}
-
-header::after {
-  content: "View";
-  color: var(--primary-button);
-  font-family: var(--heading-font);
-  font-size: 3rem;
-  -webkit-text-stroke: 1px var(--text);
 }
 
 * {

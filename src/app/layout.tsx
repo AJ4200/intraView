@@ -9,12 +9,14 @@ import './styles/footer/homebutton.css'
 import './styles/footer/more.css'
 import './styles/utils.css'
 import "./styles/interview/interview.css"
+import "./styles/app.css"
+import "./styles/dock.css"
 import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'IntraView',
+  title: { default: 'IntraView', template: '%s · IntraView' },
   description: 'A Better way to recruit',
 }
 
