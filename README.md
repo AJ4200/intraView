@@ -40,7 +40,7 @@ See [src/lib/scoring.ts](src/lib/scoring.ts) and [src/lib/groq.ts](src/lib/groq.
 - PostgreSQL: [db/schema.postgres.sql](db/schema.postgres.sql)
 - SQLite (offline): [db/schema.sqlite.sql](db/schema.sqlite.sql)
 
-Entities: `jobs` → `requirements` (tiered, weighted) → `questions`; `candidates` → `interviews` (token/QR) → `answers` (scored per requirement) → `results`.
+Entities: `iv_users` → `iv_jobs` → `iv_requirements`; `iv_candidates` → `iv_interviews` → `iv_questions` (including answers and scores) → `iv_results`. The SQLite and PostgreSQL schemas use the same tables and columns.
 
 ## Configuration
 
@@ -55,7 +55,7 @@ Copy `.env.example` to `.env.local`:
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Optional SMTP. When set (`SMTP_HOST` and `SMTP_FROM` at minimum), an invite created with a candidate email is sent automatically; port 465 uses implicit TLS, others STARTTLS. Without it the dashboard offers a `mailto:` link and copy-HTML instead |
 | `DATABASE_URL` | Optional. `postgres://...` for PostgreSQL (including Neon), `file:./.data/intraview.db` for SQLite (needs Node 22.5+), unset for `.data/db.json`. Neon/Vercel `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_UNPOOLED` and `POSTGRES_URL_NON_POOLING` are accepted if `DATABASE_URL` is unset; pooled URLs are preferred over unpooled fallbacks. |
 
-Storage currently keeps the app state as one JSON document (`app_state`) in every backend; `db/` holds the target relational schema.
+SQLite and PostgreSQL store users, jobs, requirements, candidates, interviews, questions/answers, and results in relational tables. On first startup, existing `app_state` data is imported into these tables and the old table is removed. Unset `DATABASE_URL` continues to use the local JSON file for zero-configuration development.
 
 ## Accounts
 

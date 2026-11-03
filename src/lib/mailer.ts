@@ -14,7 +14,7 @@ export interface MailInput {
   qrDataUrl?: string;
 }
 
-let transporter: nodemailer.Transporter | undefined;
+let transporter: ReturnType<typeof nodemailer.createTransport> | undefined;
 
 function transport() {
   if (!transporter) {

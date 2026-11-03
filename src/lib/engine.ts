@@ -15,6 +15,7 @@ export function createInterview(
   extra: { candidateEmail?: string; dueAt?: number } = {}
 ): Promise<Interview> {
   const interview: Interview = {
+    id: randomUUID(),
     token: randomBytes(16).toString("hex"),
     ownerId: job.ownerId,
     jobId: job.id,

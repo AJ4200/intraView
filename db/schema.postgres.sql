@@ -1,88 +1,75 @@
-CREATE TABLE jobs (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title       TEXT NOT NULL,
-  description TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE requirements (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_id      UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-  name        TEXT NOT NULL,
-  description TEXT,
-  tier        SMALLINT NOT NULL CHECK (tier BETWEEN 1 AND 3),
-  weight      NUMERIC(5,2) NOT NULL DEFAULT 1 CHECK (weight > 0),
-  is_required BOOLEAN NOT NULL DEFAULT FALSE,
-  min_score   SMALLINT NOT NULL DEFAULT 50 CHECK (min_score BETWEEN 0 AND 100),
-  position    INT NOT NULL DEFAULT 0
-);
-
-CREATE TABLE questions (
-  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  requirement_id UUID NOT NULL REFERENCES requirements(id) ON DELETE CASCADE,
-  text           TEXT NOT NULL,
-  ai_generated   BOOLEAN NOT NULL DEFAULT TRUE,
-  position       INT NOT NULL DEFAULT 0
-);
-
-CREATE TABLE candidates (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       TEXT NOT NULL,
-  email      TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TYPE interview_status AS ENUM ('invited', 'in_progress', 'completed', 'expired');
-
-CREATE TABLE interviews (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_id       UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
-  token        TEXT NOT NULL UNIQUE,
-  status       interview_status NOT NULL DEFAULT 'invited',
-  expires_at   TIMESTAMPTZ,
-  started_at   TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ
-);
-
-CREATE TABLE answers (
-  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  interview_id   UUID NOT NULL REFERENCES interviews(id) ON DELETE CASCADE,
-  question_id    UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-  requirement_id UUID NOT NULL REFERENCES requirements(id) ON DELETE CASCADE,
-  transcript     TEXT NOT NULL,
-  score          SMALLINT CHECK (score BETWEEN 0 AND 100),
-  rationale      TEXT,
-  is_followup    BOOLEAN NOT NULL DEFAULT FALSE,
-  answered_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TABLE results (
-  interview_id UUID PRIMARY KEY REFERENCES interviews(id) ON DELETE CASCADE,
-  suitability  NUMERIC(5,2) NOT NULL,
-  verdict      TEXT NOT NULL,
-  gates_passed BOOLEAN NOT NULL,
-  breakdown    JSONB NOT NULL,
-  computed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_requirements_job ON requirements(job_id, tier, position);
-CREATE INDEX idx_answers_interview ON answers(interview_id);
-
--- Accounts, ownership and timed interviews
-CREATE TABLE users (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email         TEXT NOT NULL UNIQUE,
-  name          TEXT,
+CREATE TABLE IF NOT EXISTS iv_users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
   password_hash TEXT,
-  google_id     TEXT UNIQUE,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  google_id TEXT UNIQUE,
+  created_at BIGINT NOT NULL
 );
-ALTER TABLE jobs ADD COLUMN owner_id UUID REFERENCES users(id) ON DELETE CASCADE;
-ALTER TABLE jobs ADD COLUMN time_limit_minutes INT CHECK (time_limit_minutes BETWEEN 5 AND 240);
 
--- Used by the app today: the whole state as one JSON document
-CREATE TABLE IF NOT EXISTS app_state (
-  id   INT PRIMARY KEY,
-  data JSONB NOT NULL
+CREATE TABLE IF NOT EXISTS iv_jobs (
+  id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL REFERENCES iv_users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  time_limit_minutes INTEGER,
+  created_at BIGINT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS iv_requirements (
+  id TEXT PRIMARY KEY,
+  job_id TEXT NOT NULL REFERENCES iv_jobs(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  tier SMALLINT NOT NULL CHECK (tier BETWEEN 1 AND 3),
+  weight DOUBLE PRECISION NOT NULL CHECK (weight > 0),
+  is_required BOOLEAN NOT NULL,
+  min_score SMALLINT NOT NULL CHECK (min_score BETWEEN 0 AND 100),
+  position INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS iv_candidates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT,
+  created_at BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS iv_interviews (
+  id TEXT PRIMARY KEY,
+  token TEXT NOT NULL UNIQUE,
+  candidate_id TEXT NOT NULL UNIQUE REFERENCES iv_candidates(id) ON DELETE CASCADE,
+  owner_id TEXT NOT NULL REFERENCES iv_users(id) ON DELETE CASCADE,
+  job_id TEXT NOT NULL REFERENCES iv_jobs(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('invited', 'in_progress', 'completed')),
+  current_index INTEGER NOT NULL,
+  created_at BIGINT NOT NULL,
+  due_at BIGINT,
+  started_at BIGINT,
+  deadline_at BIGINT,
+  timed_out BOOLEAN NOT NULL,
+  stopped_early BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS iv_questions (
+  id TEXT PRIMARY KEY,
+  interview_id TEXT NOT NULL REFERENCES iv_interviews(id) ON DELETE CASCADE,
+  requirement_id TEXT NOT NULL REFERENCES iv_requirements(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  is_follow_up BOOLEAN NOT NULL,
+  position INTEGER NOT NULL,
+  answer TEXT,
+  score DOUBLE PRECISION CHECK (score BETWEEN 0 AND 100),
+  rationale TEXT
+);
+
+CREATE TABLE IF NOT EXISTS iv_results (
+  interview_id TEXT PRIMARY KEY REFERENCES iv_interviews(id) ON DELETE CASCADE,
+  suitability DOUBLE PRECISION NOT NULL CHECK (suitability BETWEEN 0 AND 100),
+  verdict TEXT NOT NULL,
+  gates_passed BOOLEAN NOT NULL,
+  breakdown JSONB NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS iv_requirements_job ON iv_requirements(job_id, tier, position);
+CREATE INDEX IF NOT EXISTS iv_questions_interview ON iv_questions(interview_id, position);
