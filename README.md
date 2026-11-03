@@ -52,6 +52,7 @@ Copy `.env.example` to `.env.local`:
 | `SESSION_SECRET` | Required; signs recruiter session cookies |
 | `NEXT_PUBLIC_APP_URL` | Base URL for invite links, QR codes and Google redirect |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google sign-in (redirect URI `<APP_URL>/api/auth/google/callback`) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Optional SMTP. When set (`SMTP_HOST` and `SMTP_FROM` at minimum), an invite created with a candidate email is sent automatically; port 465 uses implicit TLS, others STARTTLS. Without it the dashboard offers a `mailto:` link and copy-HTML instead |
 | `DATABASE_URL` | Optional. `postgres://...` for PostgreSQL (including Neon), `file:./.data/intraview.db` for SQLite (needs Node 22.5+), unset for `.data/db.json`. Neon/Vercel `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_UNPOOLED` and `POSTGRES_URL_NON_POOLING` are accepted if `DATABASE_URL` is unset; pooled URLs are preferred over unpooled fallbacks. |
 
 Storage currently keeps the app state as one JSON document (`app_state`) in every backend; `db/` holds the target relational schema.
@@ -93,7 +94,7 @@ npm run dev
 
 1. Set `.env.local` (see `.env.example`) and run `npm run dev`.
 2. Open `/dashboard`, register or sign in, and create a job with its requirements (tier, weight, must-pass, minimum score).
-3. Click **Create invite** for a candidate (optionally with their email and a complete-by date) to get a link, QR code and a ready-to-send email (**Email candidate** opens your mail client with the details pre-filled; **Preview/Copy HTML** gives the styled template), then **Watch live**.
+3. Click **Create invite** for a candidate (optionally with their email and a complete-by date) to get a link and QR code. With SMTP configured the styled email is sent automatically; otherwise **Email candidate** opens your mail client pre-filled and **Copy HTML** gives the styled template. Then **Watch live**.
 4. The candidate opens `/i/<token>`: questions are read aloud, answers can be typed or dictated, and each answer is scored by Groq.
 5. The live view shows the transcript, per-answer scores and the final suitability %.
 

@@ -34,7 +34,16 @@ interface Invite {
   link: string;
   qr: string;
   token: string;
-  email: { to: string; subject: string; html: string; text: string; mailto: string } | null;
+  email: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+    mailto: string;
+    smtp: boolean;
+    sent: boolean;
+    sendError?: string;
+  } | null;
 }
 
 const blank = (): Req => ({ name: "", tier: 1, weight: 1, isRequired: false, minScore: 50 });
@@ -156,6 +165,7 @@ export default function Dashboard() {
         }),
       });
       setInvites((i) => ({ ...i, [job.id]: inv }));
+      if (inv.email?.sent) setToast(`Invite emailed to ${inv.email.to}`);
       setCandidate((c) => ({ ...c, [job.id]: "" }));
       setCandidateEmail((c) => ({ ...c, [job.id]: "" }));
       setDueAt((c) => ({ ...c, [job.id]: "" }));
@@ -276,19 +286,31 @@ export default function Dashboard() {
                         <Link className="btn" href={`/dashboard/live/${invites[job.id].token}`}>Watch live</Link>
                       </div>
                       {invites[job.id].email && (
-                        <div className="actions" style={{ marginTop: "0.75rem" }}>
-                          <a className="btn" href={invites[job.id].email!.mailto}>✉ Email candidate</a>
-                          <button className="btn secondary" onClick={() => setPreview(invites[job.id].email!.html)}>Preview HTML email</button>
-                          <button
-                            className="btn secondary"
-                            onClick={() => {
-                              void navigator.clipboard.writeText(invites[job.id].email!.html);
-                              setToast("HTML email copied");
-                            }}
-                          >
-                            Copy HTML
-                          </button>
-                        </div>
+                        <>
+                          {invites[job.id].email!.sent && (
+                            <p className="sent-note">✅ Email sent to {invites[job.id].email!.to}</p>
+                          )}
+                          {invites[job.id].email!.sendError && (
+                            <p className="error" role="alert">{invites[job.id].email!.sendError}</p>
+                          )}
+                          <div className="actions" style={{ marginTop: "0.75rem" }}>
+                            {!invites[job.id].email!.sent && (
+                              <a className="btn" href={invites[job.id].email!.mailto}>✉ Email candidate</a>
+                            )}
+                            <button className="btn secondary" onClick={() => setPreview(invites[job.id].email!.html)}>Preview email</button>
+                            {!invites[job.id].email!.sent && (
+                              <button
+                                className="btn secondary"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText(invites[job.id].email!.html);
+                                  setToast("HTML email copied");
+                                }}
+                              >
+                                Copy HTML
+                              </button>
+                            )}
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>

@@ -2,6 +2,7 @@ import { common, generate } from "commonfunlib";
 import { appUrl, requireUser, unauthorized } from "@/lib/auth";
 import { createInterview } from "@/lib/engine";
 import { buildInviteEmail, buildMailto } from "@/lib/inviteEmail";
+import { sendMail, smtpConfigured } from "@/lib/mailer";
 import { readDb } from "@/lib/store";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -29,25 +30,47 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const link = `${appUrl(req)}/i/${interview.token}`;
   const qr = await generate.qrCode(link, { margin: 1, width: 320 });
 
-  const message = buildInviteEmail({
+  const input = {
     candidateName: name,
     jobTitle: job.title,
     link,
-    qr,
     timeLimitMinutes: job.timeLimitMinutes ?? null,
     dueAt: dueAt ?? null,
     recruiterName: user.name,
-  });
+  };
+  const message = buildInviteEmail({ ...input, qr });
 
-  return Response.json(
-    {
-      token: interview.token,
-      link,
-      qr,
-      email: email
-        ? { to: email, subject: message.subject, html: message.html, text: message.text, mailto: buildMailto(email, message.subject, message.text) }
-        : null,
-    },
-    { status: 201 }
-  );
+  let emailInfo = null;
+  if (email) {
+    let sent = false;
+    let sendError: string | undefined;
+    if (smtpConfigured()) {
+      try {
+        await sendMail({
+          to: email,
+          subject: message.subject,
+          text: message.text,
+          html: buildInviteEmail({ ...input, qr: "cid:invite-qr" }).html,
+          qrDataUrl: qr,
+          replyTo: user.email,
+        });
+        sent = true;
+      } catch (e) {
+        console.error("Invite email failed", e);
+        sendError = "The email could not be sent. Check the SMTP settings or send it manually.";
+      }
+    }
+    emailInfo = {
+      to: email,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+      mailto: buildMailto(email, message.subject, message.text),
+      smtp: smtpConfigured(),
+      sent,
+      sendError,
+    };
+  }
+
+  return Response.json({ token: interview.token, link, qr, email: emailInfo }, { status: 201 });
 }
