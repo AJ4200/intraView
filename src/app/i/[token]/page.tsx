@@ -2,6 +2,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Header from "../../components/header/Header";
 import Footer from "../../components/footer/Footer";
+import Loading from "../../components/Loading";
 import { formatClock } from "@/lib/timing";
 
 interface View {
@@ -170,7 +171,7 @@ export default function CandidateInterview({ params }: { params: Promise<{ token
       <Header minimal />
       <div className="page" style={{ maxWidth: 820 }}>
         {error && !view && <div className="card"><p className="error">{error}</p></div>}
-        {!view && !error && <div className="card">Loading your interview…</div>}
+        {!view && !error && <Loading label="Loading your interview" />}
 
         {view?.status === "invited" && (
           <div className="card">

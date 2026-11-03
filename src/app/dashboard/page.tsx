@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
+import Loading from "../components/Loading";
 import { useMe } from "@/lib/client";
 import { MAX_LIMIT, MIN_LIMIT, recommendedMinutes } from "@/lib/timing";
 
@@ -180,7 +181,7 @@ export default function Dashboard() {
       <Header />
       <div className="page">
         {!me ? (
-          <div className="card">Loading…</div>
+          <Loading label="Getting your workspace ready" />
         ) : !me.user ? null : (
           <>
             <h1 style={{ fontFamily: "var(--heading-font)", fontWeight: "normal", marginBottom: "1rem" }}>
