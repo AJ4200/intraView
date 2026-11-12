@@ -74,6 +74,8 @@ Recruiter routes use the session cookie.
 | POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Email accounts |
 | GET | `/api/auth/me`, `/api/auth/google` | Current user, Google sign-in |
 | GET/POST | `/api/jobs` | List / create jobs with `requirements[]` and time limit |
+| GET | `/api/interviews` | List the signed-in recruiter's interviews with candidate details, invite and live links, dates, progress and results |
+| GET | `/api/interviews/:token/invite` | Retrieve the QR code for an owned interview invite |
 | DELETE | `/api/jobs/:id` | Delete a job |
 | POST | `/api/jobs/:id/invite` | Create an interview for `{ candidateName, candidateEmail?, dueAt? }`; returns `link`, `qr` (via [commonfunlib](https://www.npmjs.com/package/commonfunlib)) and, when an email is given, a styled `email` (`mailto`, `html`, `text`). Starting after `dueAt` is rejected (410) |
 | GET | `/api/interview/:token` | Candidate view (read-only) |
@@ -96,7 +98,7 @@ npm run dev
 2. Open `/dashboard`, register or sign in, and create a job with its requirements (tier, weight, must-pass, minimum score).
 3. Click **Create invite** for a candidate (optionally with their email and a complete-by date) to get a link and QR code. With SMTP configured the styled email is sent automatically; otherwise **Email candidate** opens your mail client pre-filled and **Copy HTML** gives the styled template. Then **Watch live**.
 4. The candidate opens `/i/<token>`: questions are read aloud, answers can be typed or dictated, and each answer is scored by Groq.
-5. The live view shows the transcript, per-answer scores and the final suitability %.
+5. The interviews table keeps candidate email, dates, invite and live links, QR codes, progress and suitability available after the page is reloaded. Open an interview to see these details, the transcript, per-answer scores and the final suitability %.
 
 ## Roadmap
 

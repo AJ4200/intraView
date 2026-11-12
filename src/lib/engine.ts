@@ -178,6 +178,8 @@ export function candidateView(i: Interview, job: Job) {
 export function recruiterView(i: Interview, job: Job) {
   return {
     ...candidateView(i, job),
+    candidateEmail: i.candidateEmail ?? null,
+    createdAt: i.createdAt,
     startedAt: i.startedAt ?? null,
     queue: i.queue,
     result: i.result,

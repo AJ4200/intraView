@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import Loading from "../components/Loading";
+import InviteQr from "../components/InviteQr";
 import { useMe } from "@/lib/client";
 import { MAX_LIMIT, MIN_LIMIT, recommendedMinutes } from "@/lib/timing";
 
@@ -24,7 +25,14 @@ interface Job {
 interface Row {
   token: string;
   candidateName: string;
+  candidateEmail: string | null;
+  jobId: string;
   jobTitle?: string;
+  createdAt: number;
+  dueAt: number | null;
+  startedAt: number | null;
+  inviteLink: string;
+  liveLink: string;
   status: string;
   timedOut: boolean;
   progress: string;
@@ -90,7 +98,7 @@ export default function Dashboard() {
     return rows.filter(
       (r) =>
         (filter === "all" || r.status === filter) &&
-        (!needle || `${r.candidateName} ${r.jobTitle ?? ""}`.toLowerCase().includes(needle))
+        (!needle || `${r.candidateName} ${r.candidateEmail ?? ""} ${r.jobTitle ?? ""}`.toLowerCase().includes(needle))
     );
   }, [rows, filter, q]);
 
@@ -250,7 +258,7 @@ export default function Dashboard() {
                       {job.requirements.length} requirements · {job.timeLimitMinutes ? `${job.timeLimitMinutes} min limit` : "no time limit"}
                     </p>
                   </div>
-                  <span className="badge">{rows.filter((r) => r.jobTitle === job.title).length} interviews</span>
+                  <span className="badge">{rows.filter((r) => r.jobId === job.id).length} interviews</span>
                 </div>
                 <div className="tags">
                   {job.requirements.map((r, i) => (
@@ -329,7 +337,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <div className="toolbar">
-                    <input className="input" placeholder="Search candidates or jobs…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search interviews" />
+                    <input className="input" placeholder="Search candidates, emails or jobs…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search interviews" />
                     <div className="filters">
                       {(["all", "invited", "in_progress", "completed"] as const).map((f) => (
                         <button key={f} className={`filter ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
@@ -341,20 +349,26 @@ export default function Dashboard() {
                   <div className="table-wrap">
                     <table className="table">
                       <thead>
-                        <tr><th>Candidate</th><th>Job</th><th>Status</th><th>Progress</th><th>Suitability</th><th /></tr>
+                        <tr><th>Candidate</th><th>Email</th><th>Job</th><th>Created</th><th>Complete by</th><th>Started</th><th>Status</th><th>Progress</th><th>Suitability</th><th>Invite link</th><th>QR</th><th>Live view</th></tr>
                       </thead>
                       <tbody>
                         {visibleRows.length === 0 && (
-                          <tr><td colSpan={6} className="muted">No interviews match.</td></tr>
+                          <tr><td colSpan={12} className="muted">No interviews match.</td></tr>
                         )}
                         {visibleRows.map((r) => (
                           <tr key={r.token}>
                             <td>{r.candidateName}</td>
+                            <td>{r.candidateEmail ?? "—"}</td>
                             <td>{r.jobTitle}</td>
+                            <td>{new Date(r.createdAt).toLocaleString()}</td>
+                            <td>{r.dueAt ? new Date(r.dueAt).toLocaleString() : "—"}</td>
+                            <td>{r.startedAt ? new Date(r.startedAt).toLocaleString() : "—"}</td>
                             <td><span className={`status ${r.status}`}>{r.status.replace("_", " ")}{r.timedOut ? " (time up)" : ""}</span></td>
                             <td>{r.progress}</td>
                             <td>{r.suitability !== undefined ? <span className={`badge ${r.verdict}`}>{r.suitability.toFixed(0)}%</span> : "—"}</td>
-                            <td><Link href={`/dashboard/live/${r.token}`}>Open →</Link></td>
+                            <td><a href={r.inviteLink}>Open invite</a></td>
+                            <td><InviteQr token={r.token} candidateName={r.candidateName} /></td>
+                            <td><Link href={r.liveLink}>Open →</Link></td>
                           </tr>
                         ))}
                       </tbody>

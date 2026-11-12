@@ -27,7 +27,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   }
 
   const interview = await createInterview(job, name, { candidateEmail: email || undefined, dueAt });
-  const link = `${appUrl(req)}/i/${interview.token}`;
+  const link = `${appUrl(req).replace(/\/+$/, "")}/i/${interview.token}`;
   const qr = await generate.qrCode(link, { margin: 1, width: 320 });
 
   const input = {

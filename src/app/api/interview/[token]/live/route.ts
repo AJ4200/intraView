@@ -1,4 +1,4 @@
-import { requireUser, unauthorized } from "@/lib/auth";
+import { appUrl, requireUser, unauthorized } from "@/lib/auth";
 import { ABANDON_MS, expireIfNeeded, recruiterView } from "@/lib/engine";
 import { readDb } from "@/lib/store";
 
@@ -11,6 +11,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
   const { token } = await ctx.params;
   const first = (await readDb()).interviews[token];
   if (!first || first.ownerId !== user.id) return Response.json({ error: "Not found" }, { status: 404 });
+  const baseUrl = appUrl(req).replace(/\/+$/, "");
 
   const enc = new TextEncoder();
   let timer: ReturnType<typeof setInterval> | undefined;
@@ -32,7 +33,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
           const i = await expireIfNeeded(token, ABANDON_MS);
           if (!i) return close();
           const job = (await readDb()).jobs[i.jobId];
-          controller.enqueue(enc.encode(`data: ${JSON.stringify(recruiterView(i, job))}\n\n`));
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({
+            ...recruiterView(i, job),
+            inviteLink: `${baseUrl}/i/${i.token}`,
+            liveLink: `${baseUrl}/dashboard/live/${i.token}`,
+          })}\n\n`));
           if (i.status === "completed") close();
         } catch {
           close();

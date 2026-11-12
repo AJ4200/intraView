@@ -1,4 +1,4 @@
-import { requireUser, unauthorized } from "@/lib/auth";
+import { appUrl, requireUser, unauthorized } from "@/lib/auth";
 import { readDb } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +7,7 @@ export async function GET(req: Request) {
   const user = await requireUser(req);
   if (!user) return unauthorized();
   const db = await readDb();
+  const baseUrl = appUrl(req).replace(/\/+$/, "");
   return Response.json(
     Object.values(db.interviews)
       .filter((i) => i.ownerId === user.id)
@@ -14,8 +15,14 @@ export async function GET(req: Request) {
       .map((i) => ({
         token: i.token,
         candidateName: i.candidateName,
+        candidateEmail: i.candidateEmail ?? null,
         jobId: i.jobId,
         jobTitle: db.jobs[i.jobId]?.title,
+        createdAt: i.createdAt,
+        dueAt: i.dueAt ?? null,
+        startedAt: i.startedAt ?? null,
+        inviteLink: `${baseUrl}/i/${i.token}`,
+        liveLink: `${baseUrl}/dashboard/live/${i.token}`,
         status: i.status,
         timedOut: Boolean(i.timedOut),
         progress: `${Math.min(i.current, i.queue.length)}/${i.queue.length}`,

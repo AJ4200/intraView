@@ -3,6 +3,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import Header from "../../../components/header/Header";
 import Footer from "../../../components/footer/Footer";
+import InviteQr from "../../../components/InviteQr";
 import { formatClock } from "@/lib/timing";
 
 interface Item {
@@ -22,7 +23,13 @@ interface Result {
 }
 interface View {
   candidateName: string;
+  candidateEmail: string | null;
   jobTitle: string;
+  createdAt: number;
+  dueAt: number | null;
+  startedAt: number | null;
+  inviteLink: string;
+  liveLink: string;
   status: string;
   total: number;
   index: number;
@@ -85,6 +92,13 @@ export default function Live({ params }: { params: Promise<{ token: string }> })
           <>
             <section className="card">
               <h1>{view.candidateName} — {view.jobTitle}</h1>
+              <p>Candidate email: {view.candidateEmail ?? "Not provided"}</p>
+              <p>Invited: {new Date(view.createdAt).toLocaleString()}</p>
+              <p>Complete by: {view.dueAt ? new Date(view.dueAt).toLocaleString() : "No deadline"}</p>
+              {view.startedAt && <p>Started: {new Date(view.startedAt).toLocaleString()}</p>}
+              <p style={{ overflowWrap: "anywhere" }}>Invite link: <a href={view.inviteLink}>{view.inviteLink}</a></p>
+              <p style={{ overflowWrap: "anywhere" }}>Live link: <a href={view.liveLink}>{view.liveLink}</a></p>
+              <InviteQr token={token} candidateName={view.candidateName} />
               <p className="muted">
                 {view.status === "invited" ? "waiting for the candidate to begin" : view.status.replace("_", " ")}
                 {view.stoppedEarly ? " · ended early (required screening requirement failed)" : ""}
