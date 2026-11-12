@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import Loading from "../components/Loading";
-import InviteQr from "../components/InviteQr";
+import InviteActions from "../components/InviteActions";
 import { useMe } from "@/lib/client";
 import { MAX_LIMIT, MIN_LIMIT, recommendedMinutes } from "@/lib/timing";
 
@@ -28,6 +28,7 @@ interface Row {
   candidateEmail: string | null;
   jobId: string;
   jobTitle?: string;
+  timeLimitMinutes: number | null;
   createdAt: number;
   dueAt: number | null;
   startedAt: number | null;
@@ -123,6 +124,7 @@ export default function Dashboard() {
   }, [me, router]);
 
   const signedIn = Boolean(me?.user);
+  const recruiterName = me?.user?.name ?? "";
   useEffect(() => {
     if (!signedIn) return;
     void refresh().catch((e) => setError(e.message));
@@ -181,6 +183,15 @@ export default function Dashboard() {
       await refresh();
     } catch (e) {
       setError((e as Error).message);
+    }
+  }
+
+  async function copyInvite(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setToast(`${label} copied`);
+    } catch {
+      setError(`Could not copy ${label.toLowerCase()}. Please copy it manually.`);
     }
   }
 
@@ -288,10 +299,7 @@ export default function Dashboard() {
                       <div className="actions">
                         <button
                           className="btn secondary"
-                          onClick={() => {
-                            void navigator.clipboard.writeText(invites[job.id].link);
-                            setToast("Link copied");
-                          }}
+                          onClick={() => void copyInvite(invites[job.id].link, "Link")}
                         >
                           Copy link
                         </button>
@@ -313,10 +321,7 @@ export default function Dashboard() {
                             {!invites[job.id].email!.sent && (
                               <button
                                 className="btn secondary"
-                                onClick={() => {
-                                  void navigator.clipboard.writeText(invites[job.id].email!.html);
-                                  setToast("HTML email copied");
-                                }}
+                                onClick={() => void copyInvite(invites[job.id].email!.html, "HTML email")}
                               >
                                 Copy HTML
                               </button>
@@ -349,11 +354,11 @@ export default function Dashboard() {
                   <div className="table-wrap">
                     <table className="table">
                       <thead>
-                        <tr><th>Candidate</th><th>Email</th><th>Job</th><th>Created</th><th>Complete by</th><th>Started</th><th>Status</th><th>Progress</th><th>Suitability</th><th>Invite link</th><th>QR</th><th>Live view</th></tr>
+                        <tr><th>Candidate</th><th>Email</th><th>Job</th><th>Created</th><th>Complete by</th><th>Started</th><th>Status</th><th>Progress</th><th>Suitability</th><th>Invite &amp; actions</th></tr>
                       </thead>
                       <tbody>
                         {visibleRows.length === 0 && (
-                          <tr><td colSpan={12} className="muted">No interviews match.</td></tr>
+                          <tr><td colSpan={10} className="muted">No interviews match.</td></tr>
                         )}
                         {visibleRows.map((r) => (
                           <tr key={r.token}>
@@ -366,9 +371,7 @@ export default function Dashboard() {
                             <td><span className={`status ${r.status}`}>{r.status.replace("_", " ")}{r.timedOut ? " (time up)" : ""}</span></td>
                             <td>{r.progress}</td>
                             <td>{r.suitability !== undefined ? <span className={`badge ${r.verdict}`}>{r.suitability.toFixed(0)}%</span> : "—"}</td>
-                            <td><a href={r.inviteLink}>Open invite</a></td>
-                            <td><InviteQr token={r.token} candidateName={r.candidateName} /></td>
-                            <td><Link href={r.liveLink}>Open →</Link></td>
+                            <td><InviteActions {...r} jobTitle={r.jobTitle ?? "Interview"} recruiterName={recruiterName} /></td>
                           </tr>
                         ))}
                       </tbody>

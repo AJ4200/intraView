@@ -3,7 +3,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import Header from "../../../components/header/Header";
 import Footer from "../../../components/footer/Footer";
-import InviteQr from "../../../components/InviteQr";
+import InviteActions from "../../../components/InviteActions";
 import { formatClock } from "@/lib/timing";
 
 interface Item {
@@ -24,6 +24,7 @@ interface Result {
 interface View {
   candidateName: string;
   candidateEmail: string | null;
+  recruiterName: string;
   jobTitle: string;
   createdAt: number;
   dueAt: number | null;
@@ -98,7 +99,7 @@ export default function Live({ params }: { params: Promise<{ token: string }> })
               {view.startedAt && <p>Started: {new Date(view.startedAt).toLocaleString()}</p>}
               <p style={{ overflowWrap: "anywhere" }}>Invite link: <a href={view.inviteLink}>{view.inviteLink}</a></p>
               <p style={{ overflowWrap: "anywhere" }}>Live link: <a href={view.liveLink}>{view.liveLink}</a></p>
-              <InviteQr token={token} candidateName={view.candidateName} />
+              <InviteActions {...view} token={token} />
               <p className="muted">
                 {view.status === "invited" ? "waiting for the candidate to begin" : view.status.replace("_", " ")}
                 {view.stoppedEarly ? " · ended early (required screening requirement failed)" : ""}

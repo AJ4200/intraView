@@ -287,6 +287,10 @@ b.live-dot {
 .table tbody tr { transition: background 0.2s; }
 .table tbody tr:hover { background: #7dc1c533; }
 .table-wrap { overflow-x: auto; border-radius: 1rem; }
+.invite-actions { min-width: 13rem; }
+.invite-action-links { display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem; align-items: center; }
+.invite-action-links button { border: 0; padding: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+.invite-actions .error { display: block; }
 .invite-qr summary { cursor: pointer; white-space: nowrap; text-decoration: underline; }
 .invite-qr img { display: block; margin-top: 0.5rem; }
 

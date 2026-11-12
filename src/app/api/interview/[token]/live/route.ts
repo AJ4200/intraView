@@ -35,6 +35,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
           const job = (await readDb()).jobs[i.jobId];
           controller.enqueue(enc.encode(`data: ${JSON.stringify({
             ...recruiterView(i, job),
+            recruiterName: user.name,
             inviteLink: `${baseUrl}/i/${i.token}`,
             liveLink: `${baseUrl}/dashboard/live/${i.token}`,
           })}\n\n`));

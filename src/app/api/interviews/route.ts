@@ -18,6 +18,7 @@ export async function GET(req: Request) {
         candidateEmail: i.candidateEmail ?? null,
         jobId: i.jobId,
         jobTitle: db.jobs[i.jobId]?.title,
+        timeLimitMinutes: db.jobs[i.jobId]?.timeLimitMinutes ?? null,
         createdAt: i.createdAt,
         dueAt: i.dueAt ?? null,
         startedAt: i.startedAt ?? null,

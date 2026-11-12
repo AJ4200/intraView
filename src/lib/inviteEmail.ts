@@ -21,7 +21,7 @@ export const durationText = (min: number | null) => {
   return [h ? `${h} hr` : "", m ? `${m} min` : ""].filter(Boolean).join(" ");
 };
 
-export function buildInviteEmail(i: InviteEmailInput) {
+export function buildInviteText(i: Omit<InviteEmailInput, "qr">) {
   const subject = `Your interview for ${i.jobTitle}`;
   const duration = durationText(i.timeLimitMinutes);
   const deadline = i.dueAt ? fmtDate(i.dueAt) : "No deadline set";
@@ -41,6 +41,13 @@ export function buildInviteEmail(i: InviteEmailInput) {
     i.recruiterName,
   ].join("\n");
 
+  return { subject, text };
+}
+
+export function buildInviteEmail(i: InviteEmailInput) {
+  const { subject, text } = buildInviteText(i);
+  const duration = durationText(i.timeLimitMinutes);
+  const deadline = i.dueAt ? fmtDate(i.dueAt) : "No deadline set";
   const row = (label: string, value: string) =>
     `<tr><td style="padding:10px 0;color:#6b5a6a;font-size:13px;text-transform:uppercase;letter-spacing:.08em;width:130px">${label}</td><td style="padding:10px 0;font-size:16px;font-weight:bold;color:#030402">${esc(value)}</td></tr>`;
 
