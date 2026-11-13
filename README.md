@@ -98,7 +98,7 @@ npm run dev
 2. Open `/dashboard`, register or sign in, and create a job with its requirements (tier, weight, must-pass, minimum score).
 3. Click **Create invite** for a candidate (optionally with their email and a complete-by date) to get a link and QR code. With SMTP configured the styled email is sent automatically; otherwise **Email candidate** opens your mail client pre-filled and **Copy HTML** gives the styled template. Then **Watch live**.
 4. The candidate opens `/i/<token>`: questions are read aloud, answers can be typed or dictated, and each answer is scored by Groq.
-5. The interviews table keeps candidate email, dates, invite and live links, QR codes, progress and suitability available after the page is reloaded. Preview a QR code, copy either link or open a prefilled email to the candidate from the table. Open an interview to access the same actions, transcript, per-answer scores and final suitability %.
+5. The interviews table keeps candidate email, dates, invite and live links, QR codes, progress and suitability in separate columns after the page is reloaded. Search or filter interviews, browse pages of 10, preview a QR code, copy either link or open a prefilled email to the candidate. Open an interview to access the same actions, transcript, per-answer scores and final suitability %.
 
 ## Roadmap
 

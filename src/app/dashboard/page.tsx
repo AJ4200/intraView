@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import Loading from "../components/Loading";
-import InviteActions from "../components/InviteActions";
+import { InviteEmailAction, InviteLinkAction } from "../components/InviteActions";
+import InviteQr from "../components/InviteQr";
 import { useMe } from "@/lib/client";
 import { MAX_LIMIT, MIN_LIMIT, recommendedMinutes } from "@/lib/timing";
 
@@ -57,6 +58,7 @@ interface Invite {
 }
 
 const blank = (): Req => ({ name: "", tier: 1, weight: 1, isRequired: false, minScore: 50 });
+const PAGE_SIZE = 10;
 
 export default function Dashboard() {
   const me = useMe();
@@ -75,6 +77,7 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | "invited" | "in_progress" | "completed">("all");
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -102,6 +105,10 @@ export default function Dashboard() {
         (!needle || `${r.candidateName} ${r.candidateEmail ?? ""} ${r.jobTitle ?? ""}`.toLowerCase().includes(needle))
     );
   }, [rows, filter, q]);
+  const pageCount = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageRows = visibleRows.slice(start, start + PAGE_SIZE);
 
   const api = useCallback(async (path: string, init?: RequestInit) => {
     const r = await fetch(path, { ...init, headers: { "Content-Type": "application/json" } });
@@ -335,48 +342,67 @@ export default function Dashboard() {
               </section>
             ))}
 
-            <section className="card">
-              <h2>Interviews</h2>
+            <section className="card interviews-section">
+              <div className="interviews-heading">
+                <div><h2>Interviews</h2><p className="muted">Manage candidates, share invites and follow their progress.</p></div>
+                <span className="interview-count">{rows.length} total</span>
+              </div>
               {rows.length === 0 ? (
                 <p className="muted">No interviews yet. Create a job and an invite to get started.</p>
               ) : (
                 <>
                   <div className="toolbar">
-                    <input className="input" placeholder="Search candidates, emails or jobs…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search interviews" />
+                    <input className="input" placeholder="Search candidates, emails or jobs…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} aria-label="Search interviews" />
                     <div className="filters">
                       {(["all", "invited", "in_progress", "completed"] as const).map((f) => (
-                        <button key={f} className={`filter ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
+                        <button key={f} className={`filter ${filter === f ? "on" : ""}`} aria-pressed={filter === f} onClick={() => { setFilter(f); setPage(1); }}>
                           {f === "all" ? "All" : f.replace("_", " ")}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="table-wrap">
-                    <table className="table">
+                    <table className="table interviews-table">
                       <thead>
-                        <tr><th>Candidate</th><th>Email</th><th>Job</th><th>Created</th><th>Complete by</th><th>Started</th><th>Status</th><th>Progress</th><th>Suitability</th><th>Invite &amp; actions</th></tr>
+                        <tr><th scope="col">Candidate</th><th scope="col">Email</th><th scope="col">Job</th><th scope="col">Created</th><th scope="col">Complete by</th><th scope="col">Started</th><th scope="col">Status</th><th scope="col">Progress</th><th scope="col">Suitability</th><th scope="col">Invite link</th><th scope="col">QR code</th><th scope="col">Live view</th></tr>
                       </thead>
                       <tbody>
                         {visibleRows.length === 0 && (
-                          <tr><td colSpan={10} className="muted">No interviews match.</td></tr>
+                          <tr><td colSpan={12} className="muted">No interviews match.</td></tr>
                         )}
-                        {visibleRows.map((r) => (
+                        {pageRows.map((r) => {
+                          const [answered, total] = r.progress.split("/").map(Number);
+                          const progress = total > 0 ? Math.min(100, Math.max(0, (answered / total) * 100)) : 0;
+                          return (
                           <tr key={r.token}>
-                            <td>{r.candidateName}</td>
-                            <td>{r.candidateEmail ?? "—"}</td>
+                            <td><strong>{r.candidateName}</strong></td>
+                            <td><InviteEmailAction {...r} jobTitle={r.jobTitle ?? "Interview"} recruiterName={recruiterName} /></td>
                             <td>{r.jobTitle}</td>
                             <td>{new Date(r.createdAt).toLocaleString()}</td>
                             <td>{r.dueAt ? new Date(r.dueAt).toLocaleString() : "—"}</td>
                             <td>{r.startedAt ? new Date(r.startedAt).toLocaleString() : "—"}</td>
                             <td><span className={`status ${r.status}`}>{r.status.replace("_", " ")}{r.timedOut ? " (time up)" : ""}</span></td>
-                            <td>{r.progress}</td>
+                            <td><div className="interview-progress"><span>{r.progress}</span><div className="interview-progress-track" role="progressbar" aria-label={`Questions answered by ${r.candidateName}`} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-valuetext={`${r.progress} questions answered`}><span style={{ width: `${progress}%` }} /></div></div></td>
                             <td>{r.suitability !== undefined ? <span className={`badge ${r.verdict}`}>{r.suitability.toFixed(0)}%</span> : "—"}</td>
-                            <td><InviteActions {...r} jobTitle={r.jobTitle ?? "Interview"} recruiterName={recruiterName} /></td>
+                            <td><InviteLinkAction href={r.inviteLink} kind="invite" candidateName={r.candidateName} /></td>
+                            <td><InviteQr token={r.token} candidateName={r.candidateName} /></td>
+                            <td><InviteLinkAction href={r.liveLink} kind="live" candidateName={r.candidateName} /></td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
+                  <nav className="table-pagination" aria-label="Interview pages">
+                    <span className="muted" aria-live="polite">
+                      {visibleRows.length ? `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, visibleRows.length)} of ${visibleRows.length}` : "No results"}
+                    </span>
+                    <div className="pagination-controls">
+                      <button type="button" className="pagination-button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>← Previous</button>
+                      <span>Page {currentPage} of {pageCount}</span>
+                      <button type="button" className="pagination-button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>Next →</button>
+                    </div>
+                  </nav>
                 </>
               )}
             </section>

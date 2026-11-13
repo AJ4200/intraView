@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { QrIcon } from "./InviteIcons";
 
 export default function InviteQr({ token, candidateName }: { token: string; candidateName: string }) {
   const [qr, setQr] = useState("");
@@ -25,7 +26,7 @@ export default function InviteQr({ token, candidateName }: { token: string; cand
 
   return (
     <details className="invite-qr" onToggle={(e) => { if (e.currentTarget.open) void loadQr(); }}>
-      <summary>QR code</summary>
+      <summary className="table-action" aria-label={`Preview QR code for ${candidateName}`}><QrIcon /> Preview QR</summary>
       {loading && <p role="status">Loading QR code...</p>}
       {error && <p className="error" role="alert">{error} <button type="button" onClick={() => void loadQr()}>Retry</button></p>}
       {qr && (
