@@ -230,18 +230,26 @@ export default function Dashboard() {
               <p className="muted">Requirement · tier (1 screening, 2 core, 3 deep dive) · weight · must-pass · minimum score</p>
               {reqs.map((r, i) => (
                 <div className="row" key={i}>
-                  <input className="input" placeholder="e.g. React experience" value={r.name} onChange={(e) => patch(i, { name: e.target.value })} />
-                  <select className="input" value={r.tier} onChange={(e) => patch(i, { tier: Number(e.target.value) })}>
-                    <option value={1}>Tier 1</option>
-                    <option value={2}>Tier 2</option>
-                    <option value={3}>Tier 3</option>
-                  </select>
-                  <input className="input" type="number" min={1} value={r.weight} onChange={(e) => patch(i, { weight: Number(e.target.value) })} />
+                  <label className="requirement-field">Requirement
+                    <input className="input" placeholder="e.g. React experience" value={r.name} onChange={(e) => patch(i, { name: e.target.value })} />
+                  </label>
+                  <label className="requirement-field">Tier
+                    <select className="input" value={r.tier} onChange={(e) => patch(i, { tier: Number(e.target.value) })}>
+                      <option value={1}>Tier 1</option>
+                      <option value={2}>Tier 2</option>
+                      <option value={3}>Tier 3</option>
+                    </select>
+                  </label>
+                  <label className="requirement-field">Weight
+                    <input className="input" type="number" min={1} value={r.weight} onChange={(e) => patch(i, { weight: Number(e.target.value) })} />
+                  </label>
                   <label className="check-chip" title="Must-pass gate">
                     <input type="checkbox" checked={r.isRequired} onChange={(e) => patch(i, { isRequired: e.target.checked })} />
                     <span>Must pass</span>
                   </label>
-                  <input className="input" type="number" min={0} max={100} value={r.minScore} onChange={(e) => patch(i, { minScore: Number(e.target.value) })} />
+                  <label className="requirement-field">Minimum score
+                    <input className="input" type="number" min={0} max={100} value={r.minScore} onChange={(e) => patch(i, { minScore: Number(e.target.value) })} />
+                  </label>
                   <button className="btn secondary" onClick={() => setReqs((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs))} aria-label="Remove requirement">✕</button>
                 </div>
               ))}

@@ -320,6 +320,28 @@ b.live-dot {
 .tag { padding: 0.1rem 0.7rem; border-radius: 1rem; background: #ffffff66; border: 1px solid #0002; font-size: 0.8rem; }
 .tag.must { background: #ffe08a; }
 
+#new-job .field > label,
+.requirement-field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; font-size: 0.78rem; font-weight: 700; }
+.requirement-field .input { min-width: 0; font-size: 0.9rem; font-weight: normal; }
+
+.back-dashboard { margin-bottom: 1rem; }
+.live-details { display: grid; gap: 1rem; }
+.live-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.live-heading h1 { margin-bottom: 0; }
+.live-metadata { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.65rem; }
+.live-metadata > div,
+.live-links > div { min-width: 0; padding: 0.75rem 1rem; border: 1px solid #ffffff66; border-radius: 1rem; background: #ffffff33; }
+.live-metadata dt,
+.live-links span { margin-bottom: 0.25rem; font-size: 0.75rem; font-weight: 700; opacity: 0.7; }
+.live-metadata dd { overflow-wrap: anywhere; }
+.live-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 0.65rem; }
+.live-links > div { display: flex; flex-direction: column; }
+.live-links a { overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 0.15em; }
+.live-status-note,
+.live-time-limit { margin: 0; }
+.live-progress { display: grid; gap: 0.35rem; }
+.live-progress .muted { margin: 0; text-align: right; }
+
 .mini-toast {
   position: fixed;
   left: 50%;
