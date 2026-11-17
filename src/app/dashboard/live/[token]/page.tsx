@@ -86,33 +86,42 @@ export default function Live({ params }: { params: Promise<{ token: string }> })
     <>
       <Header />
       <div className="page">
-        <p><Link href="/dashboard">← Dashboard</Link></p>
+        <p className="back-dashboard"><Link className="btn secondary" href="/dashboard">← Dashboard</Link></p>
         {error && <p className="error">{error}</p>}
         {!view && !error && <div className="card">Waiting for the candidate…</div>}
         {view && (
           <>
-            <section className="card">
-              <h1>{view.candidateName} — {view.jobTitle}</h1>
-              <p>Candidate email: {view.candidateEmail ?? "Not provided"}</p>
-              <p>Invited: {new Date(view.createdAt).toLocaleString()}</p>
-              <p>Complete by: {view.dueAt ? new Date(view.dueAt).toLocaleString() : "No deadline"}</p>
-              {view.startedAt && <p>Started: {new Date(view.startedAt).toLocaleString()}</p>}
-              <p style={{ overflowWrap: "anywhere" }}>Invite link: <a href={view.inviteLink}>{view.inviteLink}</a></p>
-              <p style={{ overflowWrap: "anywhere" }}>Live link: <a href={view.liveLink}>{view.liveLink}</a></p>
+            <section className="card live-details">
+              <div className="live-heading">
+                <h1>{view.candidateName} — {view.jobTitle}</h1>
+                <span className={`status ${view.status}`}>{view.status.replace("_", " ")}</span>
+              </div>
+              <dl className="live-metadata">
+                <div><dt>Candidate email</dt><dd>{view.candidateEmail ?? "Not provided"}</dd></div>
+                <div><dt>Invited</dt><dd>{new Date(view.createdAt).toLocaleString()}</dd></div>
+                <div><dt>Complete by</dt><dd>{view.dueAt ? new Date(view.dueAt).toLocaleString() : "No deadline"}</dd></div>
+                {view.startedAt && <div><dt>Started</dt><dd>{new Date(view.startedAt).toLocaleString()}</dd></div>}
+              </dl>
+              <div className="live-links">
+                <div><span>Invite link</span><a href={view.inviteLink}>{view.inviteLink}</a></div>
+                <div><span>Live link</span><a href={view.liveLink}>{view.liveLink}</a></div>
+              </div>
               <InviteActions {...view} token={token} />
-              <p className="muted">
-                {view.status === "invited" ? "waiting for the candidate to begin" : view.status.replace("_", " ")}
-                {view.stoppedEarly ? " · ended early (required screening requirement failed)" : ""}
-                {view.timedOut ? " · ended because time ran out" : ""}
-              </p>
+              {(view.status === "invited" || view.stoppedEarly || view.timedOut) && <p className="live-status-note muted">
+                {view.status === "invited" ? "Waiting for the candidate to begin." : ""}
+                {view.stoppedEarly ? "Ended early (required screening requirement failed)." : ""}
+                {view.timedOut ? "Ended because time ran out." : ""}
+              </p>}
               {remaining !== null && (
                 <p><span className={`timer ${remaining < 60_000 ? "low" : ""}`}>⏱ {formatClock(remaining)}</span></p>
               )}
               {view.status === "invited" && view.timeLimitMinutes && (
-                <p className="muted">Time limit: {view.timeLimitMinutes} min (starts when the candidate begins)</p>
+                <p className="live-time-limit muted">Time limit: {view.timeLimitMinutes} min (starts when the candidate begins)</p>
               )}
-              <div className="bar"><span style={{ width: `${view.status === "completed" ? 100 : pct}%` }} /></div>
-              <p className="muted">{view.index} of {view.total} questions answered</p>
+              <div className="live-progress">
+                <div className="bar"><span style={{ width: `${view.status === "completed" ? 100 : pct}%` }} /></div>
+                <p className="muted">{view.index} of {view.total} questions answered</p>
+              </div>
             </section>
 
             {view.result && (
