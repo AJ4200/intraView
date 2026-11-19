@@ -498,11 +498,18 @@ b.live-dot {
 .ui-cal-time .ui-select { width: 4.5rem; }
 .ui-cal-time .ui-link:first-of-type { margin-left: auto; }
 
-/* New job requirement rows: one control per column, vertically centred, no stray labels */
-.row.requirement-head { font-size: 0.75rem; font-weight: 700; color: #666; margin-bottom: 0.4rem; gap: 0.5rem; }
+/* New job requirement rows: align headings and controls to the same columns */
+.row.requirement-head,
+.row.requirement-row { grid-template-columns: minmax(0, 3fr) minmax(5rem, 1fr) minmax(5rem, 1fr) minmax(5.5rem, auto) minmax(6rem, 1fr) auto; }
+.row.requirement-head { font-size: 0.75rem; font-weight: 700; margin-bottom: 0.4rem; gap: 0.5rem; }
 .row.requirement-head > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.requirement-head > span:nth-child(4) { text-align: center; }
 .row.requirement-head > span:last-child { visibility: hidden; }
-@media (max-width: 768px) { .row.requirement-head { display: none; } }
+.row.requirement-row > .ui-check { justify-self: center; width: 2.6rem; padding: 0; }
+@media (max-width: 768px) {
+  .row.requirement-head { display: none; }
+  .row.requirement-row { grid-template-columns: 1fr 1fr; }
+}
 .row { align-items: center; }
 .row > .btn { height: 2.6rem; padding-top: 0; padding-bottom: 0; }
 

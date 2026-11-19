@@ -252,14 +252,14 @@ export default function Dashboard() {
               </div>
               <div className="row requirement-head">
                 <span>Requirement</span>
-                <span>Tier</span>
+                <span aria-hidden="true" />
                 <span>Weight</span>
                 <span>Must pass</span>
                 <span>Min score</span>
                 <span />
               </div>
               {reqs.map((r, i) => (
-                <div className="row" key={i}>
+                <div className="row requirement-row" key={i}>
                   <TextInput placeholder="Requirement, e.g. React experience" aria-label="Requirement" value={r.name} onChange={(name) => patch(i, { name })} />
                   <Select
                     label="Tier"
@@ -268,7 +268,7 @@ export default function Dashboard() {
                     onChange={(tier) => patch(i, { tier })}
                   />
                   <NumberInput placeholder="Weight" aria-label="Weight" min={1} value={r.weight} onChange={(weight) => patch(i, { weight })} />
-                  <Checkbox label="Must pass" title="Must-pass gate" checked={r.isRequired} onChange={(isRequired) => patch(i, { isRequired })} />
+                  <Checkbox ariaLabel="Must pass" title="Must-pass gate" checked={r.isRequired} onChange={(isRequired) => patch(i, { isRequired })} />
                   <NumberInput placeholder="Min score" aria-label="Minimum score" min={0} max={100} value={r.minScore} onChange={(minScore) => patch(i, { minScore })} />
                   <button className="btn secondary" onClick={() => setReqs((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs))} aria-label="Remove requirement">✕</button>
                 </div>

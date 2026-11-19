@@ -37,11 +37,13 @@ export function Checkbox({
   checked,
   onChange,
   label,
+  ariaLabel,
   title,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  label: string;
+  label?: string;
+  ariaLabel?: string;
   title?: string;
 }) {
   return (
@@ -49,6 +51,7 @@ export function Checkbox({
       type="button"
       role="checkbox"
       aria-checked={checked}
+      aria-label={ariaLabel ?? label}
       title={title}
       className={`ui-check ${checked ? "on" : ""}`}
       onClick={() => onChange(!checked)}
