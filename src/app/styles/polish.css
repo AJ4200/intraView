@@ -499,6 +499,10 @@ b.live-dot {
 .ui-cal-time .ui-link:first-of-type { margin-left: auto; }
 
 /* New job requirement rows: one control per column, vertically centred, no stray labels */
+.row.requirement-head { font-size: 0.75rem; font-weight: 700; color: #666; margin-bottom: 0.4rem; gap: 0.5rem; }
+.row.requirement-head > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.requirement-head > span:last-child { visibility: hidden; }
+@media (max-width: 768px) { .row.requirement-head { display: none; } }
 .row { align-items: center; }
 .row > .btn { height: 2.6rem; padding-top: 0; padding-bottom: 0; }
 

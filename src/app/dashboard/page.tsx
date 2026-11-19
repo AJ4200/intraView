@@ -250,7 +250,14 @@ export default function Dashboard() {
                 <label htmlFor="title">Job title</label>
                 <TextInput id="title" value={title} onChange={setTitle} maxLength={120} />
               </div>
-              <p className="muted">Requirement · tier (1 screening, 2 core, 3 deep dive) · weight · must-pass · minimum score</p>
+              <div className="row requirement-head">
+                <span>Requirement</span>
+                <span>Tier</span>
+                <span>Weight</span>
+                <span>Must pass</span>
+                <span>Min score</span>
+                <span />
+              </div>
               {reqs.map((r, i) => (
                 <div className="row" key={i}>
                   <TextInput placeholder="Requirement, e.g. React experience" aria-label="Requirement" value={r.name} onChange={(name) => patch(i, { name })} />
