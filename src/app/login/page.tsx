@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
+import { TextInput } from "../components/ui/Fields";
 import { notifySessionChange, useMe } from "@/lib/client";
 
 const errors: Record<string, string> = {
@@ -58,16 +59,16 @@ function LoginForm() {
         {mode === "register" && (
           <div className="field">
             <label htmlFor="name">Name</label>
-            <input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} />
+            <TextInput id="name" autoComplete="name" value={name} onChange={setName} required maxLength={80} />
           </div>
         )}
         <div className="field">
           <label htmlFor="email">Email</label>
-          <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <TextInput id="email" type="email" autoComplete="email" value={email} onChange={setEmail} required />
         </div>
         <div className="field">
           <label htmlFor="password">Password</label>
-          <input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <TextInput id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} value={password} onChange={setPassword} required />
         </div>
         {error && <p className="error" role="alert">{error}</p>}
         <button className="btn" disabled={busy}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}</button>

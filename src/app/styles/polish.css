@@ -272,7 +272,7 @@ b.live-dot {
 .stat:nth-child(4) { animation-delay: 0.24s; }
 
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.9rem; }
-.toolbar .input { max-width: 260px; }
+.toolbar .input, .toolbar .ui-input { max-width: 260px; }
 .filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .filter { padding: 0.3rem 0.9rem; border-radius: 2rem; border: 1px solid var(--text); background: #ffffff66; font: inherit; font-size: 0.85rem; cursor: pointer; color: var(--text); transition: 0.2s; }
 .filter:hover { transform: translateY(-1px); }
@@ -449,3 +449,64 @@ b.live-dot {
 @media (max-width: 480px) {
   .loading-state { padding: 1rem; }
 }
+
+/* Shared UI components */
+.ui-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 2.6rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--text);
+  border-radius: 1rem;
+  background: var(--accent);
+  color: var(--text);
+  font: inherit;
+}
+.ui-input:focus-visible, .ui-check:focus-visible, .ui-cal-day:focus-visible { outline: 3px solid #7dc1c5; outline-offset: 1px; }
+.ui-select { position: relative; min-width: 0; }
+.ui-select-btn { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-align: left; cursor: pointer; }
+.ui-select-btn > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-placeholder { opacity: 0.6; }
+.ui-caret { font-size: 0.8rem; }
+.ui-popover {
+  position: absolute; z-index: 30; top: calc(100% + 0.3rem); left: 0; min-width: 100%;
+  background: var(--accent); border: 1px solid var(--text); border-radius: 1rem; box-shadow: 0 8px 24px #0003;
+}
+.ui-list { list-style: none; margin: 0; padding: 0.3rem; max-height: 14rem; overflow: auto; }
+.ui-list li { padding: 0.45rem 0.7rem; border-radius: 0.7rem; cursor: pointer; white-space: nowrap; }
+.ui-list li.active { background: #ffe08a; }
+.ui-list li[aria-selected="true"] { font-weight: 700; }
+.ui-check {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 2.6rem; padding: 0 0.8rem;
+  border: 1px solid var(--text); border-radius: 1rem; background: var(--accent); color: var(--text); font: inherit; white-space: nowrap; cursor: pointer;
+}
+.ui-check.on { background: #ffe08a; }
+.ui-check-box { display: inline-flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; border: 1px solid var(--text); border-radius: 0.3rem; background: #fff; font-size: 0.75rem; line-height: 1; }
+.ui-check.on .ui-check-box { background: var(--text); color: var(--accent); }
+.ui-calendar { padding: 0.7rem; width: 17rem; }
+.ui-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+.ui-cal-head button, .ui-link { background: none; border: 0; color: var(--text); font: inherit; cursor: pointer; padding: 0.2rem 0.5rem; }
+.ui-link { text-decoration: underline; }
+.ui-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.15rem; text-align: center; }
+.ui-cal-dow { font-size: 0.75rem; opacity: 0.7; }
+.ui-cal-day { aspect-ratio: 1; border: 1px solid transparent; border-radius: 50%; background: none; color: var(--text); font: inherit; cursor: pointer; }
+.ui-cal-day:hover { background: #ffe08a88; }
+.ui-cal-day.today { border-color: var(--text); }
+.ui-cal-day.on { background: var(--text); color: var(--accent); }
+.ui-cal-time { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; }
+.ui-cal-time .ui-select { width: 4.5rem; }
+.ui-cal-time .ui-link:first-of-type { margin-left: auto; }
+
+/* New job requirement rows: one control per column, vertically centred, no stray labels */
+.row { align-items: center; }
+.row > .btn { height: 2.6rem; padding-top: 0; padding-bottom: 0; }
+
+/* Created jobs */
+.section-title { display: flex; align-items: center; gap: 0.6rem; margin: 1.5rem 0 0.75rem; font-family: var(--heading-font); font-weight: normal; }
+.section-title .badge { font-size: 0.8rem; }
+.job-card { border-left: 6px solid #7dc1c5; }
+.job-card .invite-form .ui-input { height: 2.6rem; }
+.col-extra { display: none; }
+.show-extra .col-extra { display: table-cell; }
+.show-more-btn { margin-left: auto; }

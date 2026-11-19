@@ -8,6 +8,9 @@ import Loading from "../components/Loading";
 import { InviteEmailAction, InviteLinkAction } from "../components/InviteActions";
 import InviteQr from "../components/InviteQr";
 import { useMe } from "@/lib/client";
+import { Checkbox, NumberInput, TextInput } from "../components/ui/Fields";
+import { Select } from "../components/ui/Select";
+import { DateTimePicker } from "../components/ui/DateTimePicker";
 import { MAX_LIMIT, MIN_LIMIT, recommendedMinutes } from "@/lib/timing";
 
 interface Req {
@@ -79,6 +82,8 @@ export default function Dashboard() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [toast, setToast] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     if (!toast) return;
@@ -146,15 +151,32 @@ export default function Dashboard() {
   const patch = (i: number, p: Partial<Req>) =>
     setReqs((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...p } : r)));
 
-  async function createJob() {
+  function resetForm() {
+    setEditingId(null);
+    setTitle("");
+    setReqs([blank()]);
+    setTimeMode("recommended");
+  }
+
+  function editJob(job: Job) {
+    setEditingId(job.id);
+    setTitle(job.title);
+    setReqs(job.requirements.map((r) => ({ name: r.name, tier: r.tier, weight: r.weight, isRequired: r.isRequired, minScore: r.minScore })));
+    if (job.timeLimitMinutes) {
+      setTimeMode("custom");
+      setCustomMinutes(job.timeLimitMinutes);
+    } else setTimeMode("none");
+    document.getElementById("new-job")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function saveJob() {
     try {
-      await api("/api/jobs", {
-        method: "POST",
+      await api(editingId ? `/api/jobs/${editingId}` : "/api/jobs", {
+        method: editingId ? "PUT" : "POST",
         body: JSON.stringify({ title, timeLimitMinutes: limit, requirements: reqs.filter((r) => r.name.trim()) }),
       });
-      setTitle("");
-      setReqs([blank()]);
-      setTimeMode("recommended");
+      setToast(editingId ? "Job updated" : "Job created");
+      resetForm();
       await refresh();
       setError("");
     } catch (e) {
@@ -166,6 +188,7 @@ export default function Dashboard() {
     if (!confirm(`Delete "${job.title}" and all of its interviews?`)) return;
     try {
       await api(`/api/jobs/${job.id}`, { method: "DELETE" });
+      if (editingId === job.id) resetForm();
       await refresh();
     } catch (e) {
       setError((e as Error).message);
@@ -222,34 +245,24 @@ export default function Dashboard() {
               <div className="stat glass"><b>{stats.avg === null ? "—" : `${stats.avg.toFixed(0)}%`}</b><span>Avg suitability</span></div>
             </div>
             <section className="card" id="new-job">
-              <h2>New job</h2>
+              <h2>{editingId ? "Edit job" : "New job"}</h2>
               <div className="field">
                 <label htmlFor="title">Job title</label>
-                <input id="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} />
+                <TextInput id="title" value={title} onChange={setTitle} maxLength={120} />
               </div>
               <p className="muted">Requirement · tier (1 screening, 2 core, 3 deep dive) · weight · must-pass · minimum score</p>
               {reqs.map((r, i) => (
                 <div className="row" key={i}>
-                  <label className="requirement-field">Requirement
-                    <input className="input" placeholder="e.g. React experience" value={r.name} onChange={(e) => patch(i, { name: e.target.value })} />
-                  </label>
-                  <label className="requirement-field">Tier
-                    <select className="input" value={r.tier} onChange={(e) => patch(i, { tier: Number(e.target.value) })}>
-                      <option value={1}>Tier 1</option>
-                      <option value={2}>Tier 2</option>
-                      <option value={3}>Tier 3</option>
-                    </select>
-                  </label>
-                  <label className="requirement-field">Weight
-                    <input className="input" type="number" min={1} value={r.weight} onChange={(e) => patch(i, { weight: Number(e.target.value) })} />
-                  </label>
-                  <label className="check-chip" title="Must-pass gate">
-                    <input type="checkbox" checked={r.isRequired} onChange={(e) => patch(i, { isRequired: e.target.checked })} />
-                    <span>Must pass</span>
-                  </label>
-                  <label className="requirement-field">Minimum score
-                    <input className="input" type="number" min={0} max={100} value={r.minScore} onChange={(e) => patch(i, { minScore: Number(e.target.value) })} />
-                  </label>
+                  <TextInput placeholder="Requirement, e.g. React experience" aria-label="Requirement" value={r.name} onChange={(name) => patch(i, { name })} />
+                  <Select
+                    label="Tier"
+                    value={r.tier}
+                    options={[{ value: 1, label: "Tier 1" }, { value: 2, label: "Tier 2" }, { value: 3, label: "Tier 3" }]}
+                    onChange={(tier) => patch(i, { tier })}
+                  />
+                  <NumberInput placeholder="Weight" aria-label="Weight" min={1} value={r.weight} onChange={(weight) => patch(i, { weight })} />
+                  <Checkbox label="Must pass" title="Must-pass gate" checked={r.isRequired} onChange={(isRequired) => patch(i, { isRequired })} />
+                  <NumberInput placeholder="Min score" aria-label="Minimum score" min={0} max={100} value={r.minScore} onChange={(minScore) => patch(i, { minScore })} />
                   <button className="btn secondary" onClick={() => setReqs((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs))} aria-label="Remove requirement">✕</button>
                 </div>
               ))}
@@ -257,13 +270,19 @@ export default function Dashboard() {
 
               <h3 style={{ marginTop: "1.25rem" }}>Time limit</h3>
               <div className="actions">
-                <select className="input" style={{ maxWidth: 260 }} value={timeMode} onChange={(e) => setTimeMode(e.target.value as typeof timeMode)} aria-label="Time limit mode">
-                  <option value="recommended">Recommended ({recommended} min)</option>
-                  <option value="custom">Custom</option>
-                  <option value="none">No time limit</option>
-                </select>
+                <Select
+                  className="time-mode"
+                  label="Time limit mode"
+                  value={timeMode}
+                  options={[
+                    { value: "recommended", label: `Recommended (${recommended} min)` },
+                    { value: "custom", label: "Custom" },
+                    { value: "none", label: "No time limit" },
+                  ]}
+                  onChange={setTimeMode}
+                />
                 {timeMode === "custom" && (
-                  <input className="input" style={{ maxWidth: 120 }} type="number" min={MIN_LIMIT} max={MAX_LIMIT} value={customMinutes} onChange={(e) => setCustomMinutes(Number(e.target.value))} aria-label="Custom minutes" />
+                  <NumberInput style={{ maxWidth: 120 }} min={MIN_LIMIT} max={MAX_LIMIT} value={customMinutes} onChange={setCustomMinutes} aria-label="Custom minutes" />
                 )}
               </div>
               <p className="muted">
@@ -271,12 +290,17 @@ export default function Dashboard() {
               </p>
 
               <div className="actions" style={{ marginTop: "1rem" }}>
-                <button className="btn" disabled={!title.trim() || named === 0} onClick={createJob}>Create job</button>
+                <button className="btn" disabled={!title.trim() || named === 0} onClick={saveJob}>{editingId ? "Save changes" : "Create job"}</button>
+                {editingId && <button className="btn secondary" onClick={resetForm}>Cancel</button>}
               </div>
             </section>
 
+            <h2 className="section-title" id="created-jobs">
+              Created jobs <span className="badge">{jobs.length}</span>
+            </h2>
+            {jobs.length === 0 && <p className="muted">Jobs you create will appear here.</p>}
             {jobs.map((job) => (
-              <section className="card" key={job.id} id={`job-${job.id}`}>
+              <section className="card job-card" key={job.id} id={`job-${job.id}`}>
                 <div className="job-head">
                   <div>
                     <h2>{job.title}</h2>
@@ -294,15 +318,13 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <div className="invite-form">
-                  <input className="input" placeholder="Candidate name" value={candidate[job.id] ?? ""} onChange={(e) => setCandidate((c) => ({ ...c, [job.id]: e.target.value }))} />
-                  <input className="input" type="email" placeholder="Candidate email (optional)" value={candidateEmail[job.id] ?? ""} onChange={(e) => setCandidateEmail((c) => ({ ...c, [job.id]: e.target.value }))} aria-label="Candidate email" />
-                  <label className="invite-due">
-                    <span className="muted">Complete by (optional)</span>
-                    <input className="input" type="datetime-local" value={dueAt[job.id] ?? ""} onChange={(e) => setDueAt((c) => ({ ...c, [job.id]: e.target.value }))} />
-                  </label>
+                  <TextInput placeholder="Candidate name" aria-label="Candidate name" value={candidate[job.id] ?? ""} onChange={(v) => setCandidate((c) => ({ ...c, [job.id]: v }))} />
+                  <TextInput type="email" placeholder="Candidate email (optional)" aria-label="Candidate email" value={candidateEmail[job.id] ?? ""} onChange={(v) => setCandidateEmail((c) => ({ ...c, [job.id]: v }))} />
+                  <DateTimePicker label="Complete by" placeholder="Complete by (optional)" value={dueAt[job.id] ?? ""} onChange={(v) => setDueAt((c) => ({ ...c, [job.id]: v }))} />
                 </div>
                 <div className="actions">
                   <button className="btn" onClick={() => invite(job)}>Create invite</button>
+                  <button className="btn secondary" onClick={() => editJob(job)}>Edit job</button>
                   <button className="btn secondary" onClick={() => removeJob(job)}>Delete job</button>
                 </div>
                 {invites[job.id] && (
@@ -360,7 +382,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <div className="toolbar">
-                    <input className="input" placeholder="Search candidates, emails or jobs…" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} aria-label="Search interviews" />
+                    <TextInput placeholder="Search candidates, emails or jobs…" value={q} onChange={(v) => { setQ(v); setPage(1); }} aria-label="Search interviews" />
                     <div className="filters">
                       {(["all", "invited", "in_progress", "completed"] as const).map((f) => (
                         <button key={f} className={`filter ${filter === f ? "on" : ""}`} aria-pressed={filter === f} onClick={() => { setFilter(f); setPage(1); }}>
@@ -368,15 +390,18 @@ export default function Dashboard() {
                         </button>
                       ))}
                     </div>
+                    <button type="button" className="btn secondary show-more-btn" aria-expanded={showMore} onClick={() => setShowMore((v) => !v)}>
+                      {showMore ? "Show less" : "Show more"}
+                    </button>
                   </div>
                   <div className="table-wrap">
-                    <table className="table interviews-table">
+                    <table className={`table interviews-table ${showMore ? "show-extra" : ""}`}>
                       <thead>
-                        <tr><th scope="col">Candidate</th><th scope="col">Email</th><th scope="col">Job</th><th scope="col">Created</th><th scope="col">Complete by</th><th scope="col">Started</th><th scope="col">Status</th><th scope="col">Progress</th><th scope="col">Suitability</th><th scope="col">Invite link</th><th scope="col">QR code</th><th scope="col">Live view</th></tr>
+                        <tr><th scope="col">Candidate</th><th scope="col">Email</th><th scope="col">Job</th><th scope="col" className="col-extra">Created</th><th scope="col" className="col-extra">Complete by</th><th scope="col" className="col-extra">Started</th><th scope="col">Status</th><th scope="col">Progress</th><th scope="col">Suitability</th><th scope="col">Invite link</th><th scope="col">QR code</th><th scope="col">Live view</th></tr>
                       </thead>
                       <tbody>
                         {visibleRows.length === 0 && (
-                          <tr><td colSpan={12} className="muted">No interviews match.</td></tr>
+                          <tr><td colSpan={showMore ? 12 : 9} className="muted">No interviews match.</td></tr>
                         )}
                         {pageRows.map((r) => {
                           const [answered, total] = r.progress.split("/").map(Number);
@@ -386,9 +411,9 @@ export default function Dashboard() {
                             <td><strong>{r.candidateName}</strong></td>
                             <td><InviteEmailAction {...r} jobTitle={r.jobTitle ?? "Interview"} recruiterName={recruiterName} /></td>
                             <td>{r.jobTitle}</td>
-                            <td>{new Date(r.createdAt).toLocaleString()}</td>
-                            <td>{r.dueAt ? new Date(r.dueAt).toLocaleString() : "—"}</td>
-                            <td>{r.startedAt ? new Date(r.startedAt).toLocaleString() : "—"}</td>
+                            <td className="col-extra">{new Date(r.createdAt).toLocaleString()}</td>
+                            <td className="col-extra">{r.dueAt ? new Date(r.dueAt).toLocaleString() : "—"}</td>
+                            <td className="col-extra">{r.startedAt ? new Date(r.startedAt).toLocaleString() : "—"}</td>
                             <td><span className={`status ${r.status}`}>{r.status.replace("_", " ")}{r.timedOut ? " (time up)" : ""}</span></td>
                             <td><div className="interview-progress"><span>{r.progress}</span><div className="interview-progress-track" role="progressbar" aria-label={`Questions answered by ${r.candidateName}`} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-valuetext={`${r.progress} questions answered`}><span style={{ width: `${progress}%` }} /></div></div></td>
                             <td>{r.suitability !== undefined ? <span className={`badge ${r.verdict}`}>{r.suitability.toFixed(0)}%</span> : "—"}</td>
